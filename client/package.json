@@ -1,0 +1,25 @@
+{
+	"name": "rainlang-vscode-client",
+	"description": "Client part of Rain language server implementation for vscode.",
+	"author": "Rain Protocol",
+	"license": "CAL-1.0",
+	"version": "0.0.1",
+	"publisher": "rainprotocol",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/rainprotocol/rainlang-vscode"
+	},
+	"bugs": {
+		"url": "https://github.com/rainprotocol/rainlang-vscode/issues"
+	},
+	"engines": {
+		"vscode": "^1.75.0"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^8.1.0"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.75.1",
+		"@vscode/test-electron": "^2.2.3"
+	}
+}

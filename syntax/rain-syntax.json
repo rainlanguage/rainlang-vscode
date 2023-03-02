@@ -1,0 +1,151 @@
+{
+  "fileTypes": ["rain", "rainlang", "rl"],
+  "name": "Rain Language",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#operator"
+    },
+    {
+      "include": "#opcode"
+    },
+    {
+      "include": "#alias"
+    },
+    {
+      "include": "#number"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "include": "#comment-block"
+        }
+      ]
+    },
+    "comment-block": {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.rain"
+    },
+    "operator": {
+      "patterns": [
+        {
+          "include": "#operator-assignment"
+        }
+      ]
+    },
+    "operator-assignment": {
+      "match": "(\\:)",
+      "name": "keyword.operator.assignment.rain"
+    },
+    "number": {
+      "patterns": [
+        {
+          "include": "#number-normal"
+        },
+        {
+          "include": "#number-e"
+        },
+        {
+          "include": "#number-hex"
+        },
+        {
+          "include": "#number-binary"
+        }
+      ]
+    },
+    "number-normal": {
+      "match": "\\b([0-9]+)\\b",
+      "name": "constant.numeric.normal.rain"
+    },
+    "number-e": {
+      "match": "\\b([1-9][0-9]*e[0-9]+)\\b",
+      "name": "constant.numeric.e.rain"
+    },
+    "number-hex": {
+      "match": "\\b(0x[a-fA-F0-9]+)\\b",
+      "name": "constant.numeric.hexadecimal.rain"
+    },
+    "number-binary": {
+      "match": "\\b(0b[0-1]+)\\b",
+      "name": "constant.numeric.binary.rain"
+    },
+    "opcode": {
+      "match": "\\b([a-z][a-z0-9\\-]*(?=[\\(\\<]))",
+      "captures": {
+        "1": {
+          "name": "keyword.control.opcode.rain"
+        }
+      }
+    },
+    "alias": {
+      "patterns": [
+        {
+          "match": "\\b([a-z][0-9a-z\\-]*)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.alias.rain"
+            }
+          }
+        },
+        {
+          "match": "\\b(_)\\b",
+          "name": "keyword.output-placeholder.rain"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "match": ";",
+          "name": "punctuation.terminator.statement.rain"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.rain"
+        },
+        {
+          "match": "\\<",
+          "name": "punctuation.operand.begin.rain"
+        },
+        {
+          "match": "\\>",
+          "name": "punctuation.operand.end.rain"
+        },
+        {
+          "match": "\\{",
+          "name": "punctuation.brace.curly.begin"
+        },
+        {
+          "match": "\\}",
+          "name": "punctuation.brace.curly.end"
+        },
+        {
+          "match": "\\[",
+          "name": "punctuation.brace.square.begin.rain"
+        },
+        {
+          "match": "\\]",
+          "name": "punctuation.brace.square.end.rain"
+        },
+        {
+          "match": "\\(",
+          "name": "punctuation.parameters.begin.rain"
+        },
+        {
+          "match": "\\)",
+          "name": "punctuation.parameters.end.rain"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.rainlang",
+  "uuid": "4a2eb52d-02e5-46fd-848a-0648e20ef769"
+}
