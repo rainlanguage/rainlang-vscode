@@ -17,7 +17,7 @@ It also includes an End-to-End test.
 
 After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add the following property:
 ```json
-"rainlang.opmeta": "opmeta-in-hex-string"
+"rainlang.opmeta": "0x123abcd..."   // op meta compressed bytes in hex string
 ```
 <br>
 
@@ -47,7 +47,7 @@ After installing the extention from vscode marketplace, if `.vscode/settings.jso
 - In the [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, open or create a workscpace, create a new workspace and then create `.vscode/settings.json` and add the following:
 ```json
 {
-  "rainlang.opmeta": "your-opmeta-in-hex-string"
+  "rainlang.opmeta": "0x123abcd..."   // op meta compressed bytes in hex string
 }
 ```
 then create a document that ends with `.rain` to start the language mode for that. (save these to have them ready for future).
