@@ -17,7 +17,7 @@ It also includes an End-to-End test.
 
 After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add the following property:
 ```json
-rainlang.opmeta: "opmeta-in-hex-string"
+"rainlang.opmeta": "opmeta-in-hex-string"
 ```
 <br>
 
