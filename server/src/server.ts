@@ -244,7 +244,7 @@ connection.onCompletion(
 				}
 			}
 			let _pos: [number, number] | undefined;
-			_rd.getLHSAliases()[_currentSource].forEach(v => {
+			_rd.getLHSAliases()[_currentSource]?.forEach(v => {
 				let _text = "";
 				_pos = _tree[_currentSource].tree.find(e => {
 					if (e.lhs) {
