@@ -2,7 +2,7 @@ name: Standard Test
 on: [push, pull_request]
 jobs:
   build:
-    name: Build and lint
+    name: Build, lint
     runs-on: ubuntu-latest
 
     steps:
@@ -19,3 +19,6 @@ jobs:
 
       - name: Lint
         run: nix-shell --run lint
+
+      - name: Test Build
+        run: nix-shell --run build
