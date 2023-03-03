@@ -211,15 +211,28 @@ connection.onCompletion(
 		if (_rd) {
 			const _td = _rd?.getTextDocument();
 			const _offset = _td.offsetAt(params.position);
-			const _result = _rd.getOpMeta().map(v => {
+			const _result: CompletionItem[] = _rd.getOpMeta().map(v => {
 				return {
 					label: v.name,
 					kind: CompletionItemKind.Function,
-					detail: "opcode " + v.name + (v.operand === 0 ? "()" : "<>()"),
+					detail: "opcode " + v.name + (
+						v.operand === 0 
+							? "()" 
+							: v.operand.find(i => i.name !== "inputs") 
+								? "<>()" 
+								: "()"
+					),
 					documentation: {
 						kind: "markdown",
 						value: v.desc
-					}
+					},
+					insertText: v.name + (
+						v.operand === 0 
+							? "()" 
+							: v.operand.find(i => i.name !== "inputs") 
+								? "<>()" 
+								: "()"
+					)
 				} as CompletionItem;
 			});
 			_rd.getOpMeta().forEach(v => {
@@ -227,12 +240,25 @@ connection.onCompletion(
 					_result.push({
 						label: e,
 						kind: CompletionItemKind.Function,
-						detail: "opcode " + e + (v.operand === 0 ? "()" : "<>()"),
+						detail: "opcode " + e + (
+							v.operand === 0 
+								? "()" 
+								: v.operand.find(i => i.name !== "inputs") 
+									? "<>()" 
+									: "()"
+						),
 						documentation: {
 							kind: "markdown",
 							value: v.desc
-						}
-					})
+						},
+						insertText: v.name + (
+							v.operand === 0 
+								? "()" 
+								: v.operand.find(i => i.name !== "inputs") 
+									? "<>()" 
+									: "()"
+						)
+					} as CompletionItem)
 				);
 			});
 			const _tree = _rd.getParseTree();

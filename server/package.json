@@ -17,7 +17,7 @@
 	"dependencies": {
 		"vscode-languageserver": "^8.1.0",
 		"vscode-languageserver-textdocument": "^1.0.8",
-		"@rainprotocol/rainlang": "git+https://github.com/rainprotocol/rainlang.git#b497a5e88d550ae3a03b535629e60cecc71ba623"
+		"@rainprotocol/rainlang": "git+https://github.com/rainprotocol/rainlang.git#174b13305c54f93bf94bc6e6d0f7fbac94e06a69"
 	},
 	"scripts": {}
 }
