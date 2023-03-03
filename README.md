@@ -15,7 +15,7 @@ It also includes an End-to-End test.
 
 ## Tutorial
 
-After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add the following property:
+After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add the following property: 
 ```json
 "rainlang.opmeta": "0x123abcd...   // op meta compressed bytes in hex string"
 ```
