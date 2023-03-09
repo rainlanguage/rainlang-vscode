@@ -1,17 +1,24 @@
-.vscode/**
-**/*.ts
-**/*.map
+.vscode
+.github
 .gitignore
-**/tsconfig.json
-**/tsconfig.base.json
+# **/*.ts
+# **/*.map
+# **/tsconfig.json
+# **/tsconfig.base.json
 contributing.md
 .travis.yml
-client/node_modules/**
-!client/node_modules/vscode-jsonrpc/**
-!client/node_modules/vscode-languageclient/**
-!client/node_modules/vscode-languageserver-protocol/**
-!client/node_modules/vscode-languageserver-types/**
-!client/node_modules/{minimatch,brace-expansion,concat-map,balanced-match}/**
-!client/node_modules/{semver,lru-cache,yallist}/**
+.DS_Store
+# client/node_modules/**
+# !client/node_modules/vscode-jsonrpc/**
+# !client/node_modules/vscode-languageclient/**
+# !client/node_modules/vscode-languageserver-protocol/**
+# !client/node_modules/vscode-languageserver-types/**
+# !client/node_modules/{minimatch,brace-expansion,concat-map,balanced-match}/**
+# !client/node_modules/{semver,lru-cache,yallist}/**
 shell.nix
-.github
+node_modules
+server/
+client/
+scripts/
+tsconfig.json
+

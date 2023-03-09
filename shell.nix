@@ -11,10 +11,14 @@ let
 		npm run test
 	'';
 
+	flush = pkgs.writeShellScriptBin "flush" ''
+		rm -rf dist
+	'';
+
 	flush-all = pkgs.writeShellScriptBin "flush-all" ''
+		rm -rf dist
 		rm -rf server/out
 		rm -rf server/node_modules
-		rm -rf client/out
 		rm -rf client/node_modules
 		rm -rf node_modules
 	'';
@@ -54,6 +58,7 @@ let
 			build-all
 			local-test
 			ci-test
+			flush
 			flush-all
 			watch
 			lint

@@ -16,9 +16,11 @@
 		"vscode": "^1.75.0"
 	},
 	"dependencies": {
+		"prettier": "^2.8.4",
 		"vscode-languageclient": "^8.1.0"
 	},
 	"devDependencies": {
+		"@types/prettier": "^2.7.2",
 		"@types/vscode": "^1.75.1",
 		"@vscode/test-electron": "^2.2.3"
 	}
