@@ -33,6 +33,8 @@ or
   }
 }
 ```
+
+Use [Rainlang Compile]() command accessible from Command Palette or from editor's context menu (right-click) to compile the selected rainlang document and get the ExpressionConfig.
 <br>
 
 ## Structure
@@ -59,8 +61,7 @@ or
 - Select `Launch Client` from the drop down (if it is not already).
 - Press ▷ to run the launch config (F5).
 - In the [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, open or create a workscpace and then create `.vscode/settings.json` and set the `opmeta` as explained above in Tutorial section.
-```
-then create a document that ends with `.rain` to start the language mode for that. (save these to have them ready for future).
+- Create a document that ends with `.rain` to start the language mode for that. (save these to have them ready for future).
   - Start typing your expression and get the completion for opcodes.
   - hover over some of the opcodes or values to get hover items.
   - The diagnostics will be generated automatically.

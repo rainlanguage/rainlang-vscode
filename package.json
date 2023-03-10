@@ -5,7 +5,7 @@
   "description": "Rain Protocol language (rainlang) support for vscode",
   "author": "Rain Protocol",
   "license": "CAL-1.0",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "main": "./dist/client",
   "module": "./dist/client",
