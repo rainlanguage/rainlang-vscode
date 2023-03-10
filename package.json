@@ -126,11 +126,13 @@
                   "description": "The source to query, either chain id of the network or subgraph endpoint URL, if both are provided, subgraph endpoint will be prioritized.",
                   "properties": {
                     "chainId": {
-                      "type": "number",
+                      "type": "integer",
+                      "default": 524289,
                       "description": "The chain id of the evm network to get the op meta from."
                     },
                     "subgraphUrl": {
                       "type": "string",
+                      "default": "https://api.thegraph.com/subgraphs/name/rainprotocol/interpreter-registry",
                       "pattern": "^https://api.thegraph.com/subgraphs/name/",
                       "description": "The subgraph endpoint URL to get the op meta from."
                     }
