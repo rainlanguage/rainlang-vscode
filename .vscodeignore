@@ -23,7 +23,6 @@ server/
 client/
 scripts/
 tsconfig.json
-dist
 .env
 *.rl
 *.rain

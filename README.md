@@ -5,7 +5,13 @@ Rain language support for vscode. Uses Rain Language Services from [rainlang](ht
 
 ## Functionality
 
-Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions. It has the following language features:
+Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions and also syntax highlighting and completion items in Tagged Template javascript/typescript files in form of:
+```typescript
+rainlang`[rainlang conent]`
+```
+<br>
+
+It has the following language features:
 - Completions
 - Diagnostics regenerated on each file change or configuration change
 - Hovers
@@ -18,14 +24,18 @@ It also includes an End-to-End test.
 After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add the following property:
 ```json
 "rainlang.opmeta": "0x123abcd...   // op meta compressed bytes in hex string"
+```
 or
+```json
 "rainlang.opmeta": {
   "deployerAddress": "0x12345...",
   "source": {
     "subgraphUrl": "https://api.thegrapg/..." 
   }
 }
-or 
+``` 
+or
+```json
 "rainlang.opmeta": {
   "deployerAddress": "0x12345...",
   "source": {

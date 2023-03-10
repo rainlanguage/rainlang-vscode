@@ -5,7 +5,7 @@
   "description": "Rain Protocol language (rainlang) support for vscode",
   "author": "Rain Protocol",
   "license": "CAL-1.0",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "main": "./dist/client",
   "module": "./dist/client",
@@ -176,7 +176,7 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild-server -- --minify && npm run esbuild-client -- --minify",
+    "vscode:prepublish": "rm -rf ./dist && npm run esbuild-server -- --minify && npm run esbuild-client -- --minify",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "esbuild-client": "esbuild ./client/src/extension.ts --bundle --outfile=dist/client.js --external:vscode --format=cjs --platform=node",
     "esbuild-server": "esbuild ./server/src/server.ts --bundle --outfile=dist/server.js --external:vscode --format=cjs --platform=node",
