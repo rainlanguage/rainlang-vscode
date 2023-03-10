@@ -4,3 +4,9 @@ node_modules
 client/server
 .vscode-test
 .DS_Store
+dist
+.env
+*.rl
+*.rain
+*.rainlang
+*.vsix

@@ -1,5 +1,7 @@
 .vscode
+.vscode/**
 .github
+.github/**
 .gitignore
 # **/*.ts
 # **/*.map
@@ -21,4 +23,10 @@ server/
 client/
 scripts/
 tsconfig.json
+dist
+.env
+*.rl
+*.rain
+*.rainlang
+*.vsix
 

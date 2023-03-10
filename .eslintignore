@@ -12,3 +12,9 @@ docs
 dist
 nix-shell
 README.md
+dist
+.env
+*.rl
+*.rain
+*.rainlang
+*.vsix

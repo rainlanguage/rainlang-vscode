@@ -31,7 +31,7 @@ let
 	'';
 
 	build = pkgs.writeShellScriptBin "build" ''
-		npm run compile
+		npm run esbuild
 	'';
 
 	build-all = pkgs.writeShellScriptBin "build-all" ''
@@ -41,7 +41,7 @@ let
 	'';
 
 	watch = pkgs.writeShellScriptBin "watch" ''
-		npm run watch
+		npm run esbuild-watch
 	'';
 
 	lint = pkgs.writeShellScriptBin "lint" ''
