@@ -1,0 +1,30 @@
+{
+  "scopeName": "rainlang-string.injection",
+  "injectionSelector": "L:source.js -comment -(string -meta.embedded), L:source.jsx -comment -(string -meta.embedded),  L:source.js.jsx -comment -(string -meta.embedded), L:source.ts -comment -(string -meta.embedded), L:source.tsx -comment -(string -meta.embedded)",
+  "patterns": [
+		{
+			"name": "string.rainlang.taggedTemplate",
+			"contentName": "meta.embedded.rainlang",
+			"begin": "(rainlang)(`)",
+			"beginCaptures": {
+				"1": {
+					"name": "entity.name.function.tagged-template.js"
+				},
+				"2": {
+					"name": "punctuation.definition.string.template.begin.js"
+				}
+			},
+			"end": "(`)",
+			"endCaptures": {
+				"1": {
+					"name": "punctuation.definition.string.template.end.js"
+				}
+			},
+			"patterns": [
+				{
+					"include": "source.rainlang"
+				}
+			]
+		}
+  ]
+}

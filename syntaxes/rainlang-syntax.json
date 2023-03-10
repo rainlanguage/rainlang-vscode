@@ -32,7 +32,7 @@
     "comment-block": {
       "begin": "/\\*",
       "end": "\\*/",
-      "name": "comment.block.rain"
+      "name": "comment.block.rainlang"
     },
     "operator": {
       "patterns": [
@@ -43,7 +43,7 @@
     },
     "operator-assignment": {
       "match": "(\\:)",
-      "name": "keyword.operator.assignment.rain"
+      "name": "keyword.operator.assignment.rainlang"
     },
     "number": {
       "patterns": [
@@ -63,25 +63,25 @@
     },
     "number-normal": {
       "match": "\\b([0-9]+)\\b",
-      "name": "constant.numeric.normal.rain"
+      "name": "constant.numeric.normal.rainlang"
     },
     "number-e": {
       "match": "\\b([1-9][0-9]*e[0-9]+)\\b",
-      "name": "constant.numeric.e.rain"
+      "name": "constant.numeric.e.rainlang"
     },
     "number-hex": {
       "match": "\\b(0x[a-fA-F0-9]+)\\b",
-      "name": "constant.numeric.hexadecimal.rain"
+      "name": "constant.numeric.hexadecimal.rainlang"
     },
     "number-binary": {
       "match": "\\b(0b[0-1]+)\\b",
-      "name": "constant.numeric.binary.rain"
+      "name": "constant.numeric.binary.rainlang"
     },
     "opcode": {
       "match": "\\b([a-z][a-z0-9\\-]*(?=[\\(\\<]))",
       "captures": {
         "1": {
-          "name": "keyword.control.opcode.rain"
+          "name": "keyword.control.opcode.rainlang"
         }
       }
     },
@@ -91,13 +91,13 @@
           "match": "\\b([a-z][0-9a-z\\-]*)\\b",
           "captures": {
             "1": {
-              "name": "variable.alias.rain"
+              "name": "variable.alias.rainlang"
             }
           }
         },
         {
           "match": "\\b(_)\\b",
-          "name": "keyword.output-placeholder.rain"
+          "name": "keyword.output-placeholder.rainlang"
         }
       ]
     },
@@ -105,19 +105,19 @@
       "patterns": [
         {
           "match": ";",
-          "name": "punctuation.terminator.statement.rain"
+          "name": "punctuation.terminator.statement.rainlang"
         },
         {
           "match": ",",
-          "name": "punctuation.separator.rain"
+          "name": "punctuation.separator.rainlang"
         },
         {
           "match": "\\<",
-          "name": "punctuation.operand.begin.rain"
+          "name": "punctuation.operand.begin.rainlang"
         },
         {
           "match": "\\>",
-          "name": "punctuation.operand.end.rain"
+          "name": "punctuation.operand.end.rainlang"
         },
         {
           "match": "\\{",
@@ -129,19 +129,19 @@
         },
         {
           "match": "\\[",
-          "name": "punctuation.brace.square.begin.rain"
+          "name": "punctuation.brace.square.begin.rainlang"
         },
         {
           "match": "\\]",
-          "name": "punctuation.brace.square.end.rain"
+          "name": "punctuation.brace.square.end.rainlang"
         },
         {
           "match": "\\(",
-          "name": "punctuation.parameters.begin.rain"
+          "name": "punctuation.parameters.begin.rainlang"
         },
         {
           "match": "\\)",
-          "name": "punctuation.parameters.end.rain"
+          "name": "punctuation.parameters.end.rainlang"
         }
       ]
     }
