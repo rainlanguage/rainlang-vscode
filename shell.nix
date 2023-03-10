@@ -34,6 +34,10 @@ let
 		npm run esbuild
 	'';
 
+	build-prod = pkgs.writeShellScriptBin "build-prod" ''
+		npm run esbuild-prod
+	'';
+
 	build-all = pkgs.writeShellScriptBin "build-all" ''
 		flush-all
 		npm install
@@ -56,6 +60,7 @@ let
 			pkgs.nodejs-16_x
 			build
 			build-all
+			build-prod
 			local-test
 			ci-test
 			flush
