@@ -125,25 +125,26 @@ connection.onDidChangeConfiguration(async() => {
 		opmeta = typeof settings.opmeta === "string"
 			? settings.opmeta
 			: await getOpMeta(settings.opmeta);
-		rainDocuments.clear();
-		inlineRainDocuments.clear();
-		documents.all().forEach(v => {
-			if (v.languageId === "rainlang") {
-				const _rainDoc = new RainDocument(v, opmeta);
-				rainDocuments.set(v.uri, _rainDoc);
-				doValidate(_rainDoc);
-			}
-			else {
-				const _embeded = embeddedRainlang(v, opmeta);
-				if (_embeded) {
-					inlineRainDocuments.set(v.uri, _embeded);
-					// for (let i = 0; i < _embeded.length; i++) {
-					// 	doValidate(_embeded[i].rainDocument, v.uri);
-					// }
-				}
-			}
-		});
 	}
+	else opmeta = "";
+	rainDocuments.clear();
+	inlineRainDocuments.clear();
+	documents.all().forEach(v => {
+		if (v.languageId === "rainlang") {
+			const _rainDoc = new RainDocument(v, opmeta);
+			rainDocuments.set(v.uri, _rainDoc);
+			doValidate(_rainDoc);
+		}
+		else {
+			const _embeded = embeddedRainlang(v, opmeta);
+			if (_embeded) {
+				inlineRainDocuments.set(v.uri, _embeded);
+				// for (let i = 0; i < _embeded.length; i++) {
+				// 	doValidate(_embeded[i].rainDocument, v.uri);
+				// }
+			}
+		}
+	});
 });
 
 documents.onDidOpen(v => {
