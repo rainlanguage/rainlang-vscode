@@ -35,8 +35,9 @@ export async function activate(context: ExtensionContext) {
 				end: vscode.window.activeTextEditor.selection.end,
 			}
 		);
-		if (!rainlangCompilerChannel) 
-			rainlangCompilerChannel = vscode.window.createOutputChannel("Rain Language Compiler", "json");
+		if (!rainlangCompilerChannel) rainlangCompilerChannel = vscode.window.createOutputChannel(
+			"Rain Language Compiler", "json"
+		);
 		rainlangCompilerChannel.show(true);
 		if (result) rainlangCompilerChannel.appendLine(format(
 			JSON.stringify(result, null, 4), 
@@ -74,6 +75,24 @@ export async function activate(context: ExtensionContext) {
 		},
 		initializationOptions: initSettings
 	};
+
+	// const myProvider = new (class implements vscode.InlayHintsProvider {
+	// 	provideInlayHints(
+	// 		document: vscode.TextDocument, 
+	// 		range: vscode.Range
+	// 	): vscode.ProviderResult<vscode.InlayHint[]> {
+	// 		return [new vscode.InlayHint(new vscode.Position(0, 0), "hello")];
+	// 	}
+	// });
+	// context.subscriptions.push(
+	// 	vscode.languages.registerInlayHintsProvider(
+	// 		[{language: "rainlang"}, {language: "javascript"}], 
+	// 		myProvider
+	// 	)
+	// );
+	// vscode.window.onDidChangeActiveTextEditor(e => {
+	// 	console.log(e.document.getText());
+	// });
 
 	// Create the language client and start the client.
 	client = new LanguageClient(

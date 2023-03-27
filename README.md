@@ -5,9 +5,10 @@ Rain language support for vscode. Uses Rain Language Services from [rainlang](ht
 
 ## Functionality
 
-Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions and also syntax highlighting and code completion in [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) of javascript/typescript files in form of:
+Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions and also syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates), example:
 ```typescript
-rainlang`result: add(1 2);`
+// rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
+const myExp = rainlang`_: add(1 2);`
 ```
 <br>
 

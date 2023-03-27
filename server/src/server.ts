@@ -1,16 +1,14 @@
-import { embeddedRainlang, getOpMeta, isInRange } from './utils';
+import { getOpMeta, isInRange } from './utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { ErrorCode, RainDocument, RDNode } from '@rainprotocol/rainlang';
+import { ClientCapabilities, getRainCompletion, getRainDiagnostics, getRainHover, RainDocument } from '@rainprotocol/rainlang';
 import {
 	createConnection,
 	TextDocuments,
 	Diagnostic,
-	DiagnosticSeverity,
 	ProposedFeatures,
 	InitializeParams,
 	DidChangeConfigurationNotification,
 	CompletionItem,
-	CompletionItemKind,
 	TextDocumentSyncKind,
 	InitializeResult,
 	CompletionParams,
@@ -135,15 +133,15 @@ connection.onDidChangeConfiguration(async() => {
 			rainDocuments.set(v.uri, _rainDoc);
 			doValidate(_rainDoc);
 		}
-		else {
-			const _embeded = embeddedRainlang(v, opmeta);
-			if (_embeded) {
-				inlineRainDocuments.set(v.uri, _embeded);
-				// for (let i = 0; i < _embeded.length; i++) {
-				// 	doValidate(_embeded[i].rainDocument, v.uri);
-				// }
-			}
-		}
+		// else {
+		// 	const _embeded = embeddedRainlang(v, opmeta);
+		// 	if (_embeded) {
+		// 		inlineRainDocuments.set(v.uri, _embeded);
+		// 		// for (let i = 0; i < _embeded.length; i++) {
+		// 		// 	doValidate(_embeded[i].rainDocument, v.uri);
+		// 		// }
+		// 	}
+		// }
 	});
 });
 
@@ -153,25 +151,25 @@ documents.onDidOpen(v => {
 		rainDocuments.set(v.document.uri, _rainDoc);
 		doValidate(_rainDoc);
 	}
-	else {
-		const _embeded = embeddedRainlang(v.document, opmeta);
-		if (_embeded) {
-			inlineRainDocuments.set(v.document.uri, _embeded);
-			// for (let i = 0; i < _embeded.length; i++) {
-			// 	doValidate(_embeded[i].rainDocument, v.document.uri);
-			// }
-		}
-	}
+	// else {
+	// 	const _embeded = embeddedRainlang(v.document, opmeta);
+	// 	if (_embeded) {
+	// 		inlineRainDocuments.set(v.document.uri, _embeded);
+	// 		// for (let i = 0; i < _embeded.length; i++) {
+	// 		// 	doValidate(_embeded[i].rainDocument, v.document.uri);
+	// 		// }
+	// 	}
+	// }
 });
 
 documents.onDidClose(v => {
+	connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
 	if (v.document.languageId === "rainlang") {
 		rainDocuments.delete(v.document.uri);
 	}
-	else {
-		inlineRainDocuments.delete(v.document.uri);
-	}
-	connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
+	// else {
+	// 	inlineRainDocuments.delete(v.document.uri);
+	// }
 });
 
 documents.onDidChangeContent(change => {
@@ -187,48 +185,23 @@ documents.onDidChangeContent(change => {
 			doValidate(_rainDoc);
 		}
 	}
-	else {
-		inlineRainDocuments.delete(change.document.uri);
-		const _embeded = embeddedRainlang(change.document, opmeta);
-		if (_embeded) {
-			inlineRainDocuments.set(change.document.uri, _embeded);
-			// for (let i = 0; i < _embeded.length; i++) {
-			// 	doValidate(_embeded[i].rainDocument, change.document.uri);
-			// }
-		}
-	}
+	// else {
+	// 	inlineRainDocuments.delete(change.document.uri);
+	// 	const _embeded = embeddedRainlang(change.document, opmeta);
+	// 	if (_embeded) {
+	// 		inlineRainDocuments.set(change.document.uri, _embeded);
+	// 		// for (let i = 0; i < _embeded.length; i++) {
+	// 		// 	doValidate(_embeded[i].rainDocument, change.document.uri);
+	// 		// }
+	// 	}
+	// }
 });
 
 async function doValidate(rainDocument: RainDocument, uri?: string): Promise<void> {
 	const _td = rainDocument.getTextDocument();
-	const diagnostics: Diagnostic[] = [];
-	rainDocument.getProblems().forEach(
-		v => {
-			if (!v.msg.includes("${") && v.code !== 0x101) {
-				diagnostics.push(Diagnostic.create(
-					Range.create(
-						_td.positionAt(v.position[0]),
-						_td.positionAt(v.position[1] + 1)
-					),
-					ErrorCode[v.code],
-					DiagnosticSeverity.Error,
-					v.code,
-					"rainlang",
-					[
-						{
-							location: {
-								uri: _td.uri,
-								range: Range.create(
-									_td.positionAt(v.position[0]),
-									_td.positionAt(v.position[1] + 1)
-								)
-							},
-							message: v.msg
-						}
-					]
-				));
-			}
-		}
+	const diagnostics: Diagnostic[] = await getRainDiagnostics(
+		rainDocument, 
+		{ clientCapabilities: ClientCapabilities.ALL }
 	);
 
 	// Send the computed diagnostics to VSCode.
@@ -250,113 +223,25 @@ connection.onCompletion(
 		) {
 			_rd = rainDocuments.get(params.textDocument.uri);
 		}
-		else {
-			const _inline = inlineRainDocuments.get(params.textDocument.uri);
-			if (_inline) {
-				for (let i = 0; i < _inline.length; i++) {
-					if (isInRange(_inline[i].range, params.position)) {
-						_rd = _inline[i].rainDocument;
-						break;
-					}
-				}
-			}
-		}
+		// else {
+		// 	const _inline = inlineRainDocuments.get(params.textDocument.uri);
+		// 	if (_inline) {
+		// 		for (let i = 0; i < _inline.length; i++) {
+		// 			if (isInRange(_inline[i].range, params.position)) {
+		// 				_rd = _inline[i].rainDocument;
+		// 				break;
+		// 			}
+		// 		}
+		// 	}
+		// }
 		if (_rd) {
-			const _td = _rd?.getTextDocument();
-			const _offset = _td.offsetAt(params.position);
-			const _result: CompletionItem[] = _rd.getOpMeta().map(v => {
-				return {
-					label: v.name,
-					kind: CompletionItemKind.Function,
-					detail: "opcode " + v.name + (
-						v.operand === 0 
-							? "()" 
-							: v.operand.find(i => i.name !== "inputs") 
-								? "<>()" 
-								: "()"
-					),
-					documentation: {
-						kind: "markdown",
-						value: v.desc
-					},
-					insertText: v.name + (
-						v.operand === 0 
-							? "()" 
-							: v.operand.find(i => i.name !== "inputs") 
-								? "<>()" 
-								: "()"
-					)
-				} as CompletionItem;
-			});
-			_rd.getOpMeta().forEach(v => {
-				v.aliases?.forEach(e =>
-					_result.push({
-						label: e,
-						kind: CompletionItemKind.Function,
-						detail: "opcode " + e + (
-							v.operand === 0 
-								? "()" 
-								: v.operand.find(i => i.name !== "inputs") 
-									? "<>()" 
-									: "()"
-						),
-						documentation: {
-							kind: "markdown",
-							value: v.desc
-						},
-						insertText: v.name + (
-							v.operand === 0 
-								? "()" 
-								: v.operand.find(i => i.name !== "inputs") 
-									? "<>()" 
-									: "()"
-						)
-					} as CompletionItem)
-				);
-			});
-			const _tree = _rd.getParseTree();
-			let _currentSource = 0;
-			for (let i = 0; i < _tree.length; i++) {
-				if (_tree[i].position[0] <= _offset && _tree[i].position[1] >= _offset) {
-					_currentSource = i;
-					break;
-				}
-			}
-			let _pos: [number, number] | undefined;
-			_rd.getLHSAliases()[_currentSource]?.forEach(v => {
-				let _text = "";
-				_pos = _tree[_currentSource].tree.find(e => {
-					if (e.lhs) {
-						if (Array.isArray(e.lhs)) {
-							if (e.lhs.find(i => i.name === v.name)) return true;
-							else return false;
-						}
-						else {
-							if (e.lhs.name === v.name) return true;
-							else return false;
-						}
-					}
-					else return false;
-				})?.position;
-				if (_pos) _text = `${_rd!.getTextDocument()
-					.getText()
-					.slice(_pos[0], _pos[1] + 1)}`;
-				_result.unshift({
-					label: v.name,
-					kind: CompletionItemKind.Variable,
-					detail: v.name === "_" ? "placeholder _" : v.name,
-					documentation: {
-						kind: "markdown",
-						value: [
-							`LHS Alias to `,
-							"```rainlang",
-							_text,
-							"```"
-						].join("\n")
-					}
-				});
-			});
-			return _result;
+			const completions = getRainCompletion(
+				_rd, 
+				params.position, 
+				{ clientCapabilities: ClientCapabilities.ALL }
+			);
+			if (completions) return completions;
+			else return [];
 		}
 		else return [];
 	}
@@ -390,95 +275,11 @@ connection.onHover(
 		// 	}
 		// }
 		if (_rd) {
-			const _td = _rd.getTextDocument();
-			const _offset = _td.offsetAt(params.position);
-			const _tree = _rd.getParseTree().find(v =>
-				v.position[0] <= _offset && v.position[1] >= _offset
+			return getRainHover(
+				_rd, 
+				params.position, 
+				{ clientCapabilities: ClientCapabilities.ALL }
 			);
-			const search = (node: RDNode[]): Hover | null => {
-				for (let i = 0; i < node.length; i++) {
-					const _n = node[i];
-					if (_n.position[0] <= _offset && _n.position[1] >= _offset) {
-						if ("opcode" in _n) {
-							if (_n.parens[0] < _offset && _n.parens[1] > _offset) {
-								return search(_n.parameters);
-							}
-							else return {
-								contents: {
-									kind: "markdown",
-									value: _n.opcode.description
-								}
-							} as Hover;
-						}
-						else if ("value" in _n) {
-							return {
-								contents: {
-									kind: "markdown",
-									value: "Value"
-								}
-							} as Hover;
-						}
-						else return {
-							contents: {
-								kind: "markdown",
-								value: [
-									"LHS Alias",
-									"```rainlang",
-									_td.getText(
-										Range.create(
-											_td.positionAt(_n.position[0]), 
-											_td.positionAt(_n.position[1] + 1)
-										)
-									),
-									"```"
-								].join("\n")
-							},
-							range: Range.create(_td.positionAt(4), _td.positionAt(12))
-						} as Hover;
-					}
-					else if (_n.lhs) {
-						let _lhs = _n.lhs;
-						if (!Array.isArray(_lhs)) _lhs = [_lhs];
-						for (let j = 0; j < _lhs.length; j++) {
-							if (_lhs[j].position[0] <= _offset && _lhs[j].position[1] >= _offset) {
-								return {
-									contents: {
-										kind: "markdown",
-										value: "opcode" in _n 
-											? [
-												"Alias for", 
-												"```rainlang",
-												_td.getText(
-													Range.create(
-														_td.positionAt(_n.position[0]),
-														_td.positionAt(_n.position[1] + 1)
-													)
-												),
-												"```"
-											].join("\n")
-											: "value" in _n
-												? [
-													"Alias for value",
-													"```rainlang",
-													_n.value,
-													"```"
-												].join("\n")
-												: [
-													"Alias for alias",
-													"```rainlang",
-													_n.name,
-													"```"
-												].join("\n")
-									}
-								} as Hover;
-							}
-						}
-					}
-				}
-				return null;
-			};
-			if (_tree) return search(_tree.tree);
-			else return null;
 		}
 		else return null;
 	}
