@@ -84,29 +84,30 @@ connection.onExecuteCommand((e: ExecuteCommandParams) => {
 	if (e.command === "_compile") {
 		const langId = e.arguments![0];
 		const uri = e.arguments![1];
-		const range = e.arguments![2];
+		// const range = e.arguments![2];
 		if (langId === "rainlang") {
 			const _rainDoc = rainDocuments.get(uri);
 			if (_rainDoc) return _rainDoc.getExpressionConfig();
 			else return null;
 		}
-		else {
-			const _inline = inlineRainDocuments.get(uri);
-			if (_inline) {
-				for (let i = 0; i < _inline.length; i++) {
-					if (
-						isInRange(_inline[i].range, range.start) && 
-						isInRange(_inline[i].range, range.end)
-					) {
-						if (!_inline[i].hasLiteralTemplate) 
-							return _inline[i].rainDocument.getExpressionConfig();
-						else return null;
-					}
-				}
-				return null;
-			}
-			return null;
-		}
+		else return null;
+		// else {
+		// 	const _inline = inlineRainDocuments.get(uri);
+		// 	if (_inline) {
+		// 		for (let i = 0; i < _inline.length; i++) {
+		// 			if (
+		// 				isInRange(_inline[i].range, range.start) && 
+		// 				isInRange(_inline[i].range, range.end)
+		// 			) {
+		// 				if (!_inline[i].hasLiteralTemplate) 
+		// 					return _inline[i].rainDocument.getExpressionConfig();
+		// 				else return null;
+		// 			}
+		// 		}
+		// 		return null;
+		// 	}
+		// 	return null;
+		// }
 	}
 });
 
