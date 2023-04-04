@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "es2020",
-		"lib": ["es2020"],
+		"lib": ["es2020", "WebWorker"],
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"sourceMap": true,
@@ -10,5 +10,5 @@
 		"outDir": "out"
 	},
 	"include": ["src"],
-	"exclude": ["node_modules", ".vscode-test"]
+	"exclude": ["node_modules", ".vscode-test", ".vscode-test-web"]
 }

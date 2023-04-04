@@ -1,21 +1,23 @@
 name: Standard Test
+
 on: [push, pull_request]
+
 jobs:
-  build:
-    name: Build, lint
+  build-lint-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - name: Checkout Repo
+        uses: actions/checkout@v3
 
-      - name: Install nix
-        uses: cachix/install-nix-action@v13
+      - name: Install NodeJS v16
+        uses: actions/setup-node@v3
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
+          node-version: 16
+          cache: 'npm'
 
-      - name: Build
-        run: nix-shell
+      - name: Install Dependencies
+        run: npm install
 
       - name: Lint
-        run: nix-shell --run lint
+        run: npm run lint

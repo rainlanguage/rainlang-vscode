@@ -1,21 +1,20 @@
-import * as path from 'path';
-import { format } from 'prettier';
-import * as vscode from 'vscode';
-import { workspace, ExtensionContext } from 'vscode';
+import * as path from "path";
+import { format } from "prettier";
+import * as vscode from "vscode";
 import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
 	TransportKind
-} from 'vscode-languageclient/node';
+} from "vscode-languageclient/node";
 
 
 let client: LanguageClient;
 
-export async function activate(context: ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(
-		path.join('dist', 'server.js')
+		path.join("dist", "node", "server.js")
 	);
 
 	// get the initial settings and pass them as initialzeOptions to server
@@ -67,13 +66,13 @@ export async function activate(context: ExtensionContext) {
 			{ language: "typescript" }
 		],
 		synchronize: {
-			// Notify the server about file changes to '.clientrc files contained in the workspace
+			// Notify the server about file changes to ".clientrc files contained in the workspace
 			fileEvents: [
-				// workspace.createFileSystemWatcher('**/*.rain'),
-				workspace.createFileSystemWatcher('**/.clientrc')
+				// workspace.createFileSystemWatcher("**/*.rain"),
+				vscode.workspace.createFileSystemWatcher("**/.clientrc")
 			]
 		},
-		initializationOptions: initSettings
+		initializationOptions: { opmeta: initSettings.opmeta }
 	};
 
 	// const myProvider = new (class implements vscode.InlayHintsProvider {
@@ -96,8 +95,8 @@ export async function activate(context: ExtensionContext) {
 
 	// Create the language client and start the client.
 	client = new LanguageClient(
-		'rainlang',
-		'Rain Language',
+		"rainlang",
+		"Rain Language",
 		serverOptions,
 		clientOptions
 	);
