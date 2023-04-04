@@ -1,4 +1,4 @@
-import { getOpMeta, isInRange } from './utils';
+import { getOpMeta } from './utils';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { ClientCapabilities, getRainCompletion, getRainDiagnostics, getRainHover, RainDocument } from '@rainprotocol/rainlang';
 import {

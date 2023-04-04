@@ -5,14 +5,29 @@
 		{
 			"type": "extensionHost",
 			"request": "launch",
-			"name": "Launch Client",
+			"name": "Launch Client Desktop",
 			"runtimeExecutable": "${execPath}",
 			"args": ["--extensionDevelopmentPath=${workspaceRoot}"],
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"autoAttachChildProcesses": true,
 			"preLaunchTask": {
 				"type": "npm",
-				"script": "esbuild"
+				"script": "build-node-dev"
+			}
+		},
+		{
+			"type": "extensionHost",
+			"debugWebWorkerHost": true,
+			"request": "launch",
+			"name": "Launch Client Web",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceRoot}", 
+				"--extensionDevelopmentKind=web"
+			],
+			"outFiles": ["${workspaceRoot}/dist/browser/**/*.js"],
+			"preLaunchTask": {
+				"type": "npm",
+				"script": "build-browser-dev"
 			}
 		},
 		{

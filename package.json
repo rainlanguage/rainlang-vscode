@@ -7,8 +7,8 @@
   "license": "CAL-1.0",
   "version": "0.0.9",
   "private": true,
-  "main": "./dist/client",
-  "module": "./dist/client",
+  "main": "./dist/node/client",
+  "browser": "./dist/browser/client",
   "homepage": "http://rainprotocol.xyz/",
   "repository": {
     "type": "git",
@@ -90,10 +90,22 @@
     "configurationDefaults": {
       "[rainlang]": {
         "editor.language.colorizedBracketPairs": [
-          ["<", ">"],
-          ["(", ")"],
-          ["{", "}"],
-          ["[", "]"]
+          [
+            "<",
+            ">"
+          ],
+          [
+            "(",
+            ")"
+          ],
+          [
+            "{",
+            "}"
+          ],
+          [
+            "[",
+            "]"
+          ]
         ]
       }
     },
@@ -178,13 +190,16 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild-prod",
+    "vscode:prepublish": "npm run build-prod",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-    "esbuild-client": "esbuild ./client/src/extension.ts --bundle --outfile=./dist/client.js --external:vscode --format=cjs --platform=node",
-    "esbuild-server": "esbuild ./server/src/server.ts --bundle --outfile=./dist/server.js --external:vscode --format=cjs --platform=node",
-    "esbuild": "npm run esbuild-server -- --sourcemap && npm run esbuild-client -- --sourcemap",
-    "esbuild-watch": "npm run esbuild-client -- --sourcemap --watch",
-    "esbuild-prod": "rm -rf ./dist && npm run esbuild-server -- --minify && npm run esbuild-client -- --minify",
+    "build": "rimraf ./dist && npm run build-node-dev && npm run build-browser-dev",
+    "build-prod": "rimraf ./dist && npm run build-node-prod && npm run build-browser-prod",
+    "build-node-dev": "npm run build-node-server -- --sourcemap && npm run build-node-client -- --sourcemap",
+    "build-node-prod": "npm run build-node-server -- --minify && npm run build-node-client -- --minify",
+    "build-browser-dev": "webpack --config ./webpack.dev.js",
+    "build-browser-prod": "webpack --config ./webpack.prod.js",
+    "build-node-client": "esbuild ./client/src/nodeClient.ts --bundle --outfile=./dist/node/client.js --external:vscode --format=cjs --platform=node --target=es2020",
+    "build-node-server": "esbuild ./server/src/nodeServer.ts --bundle --outfile=./dist/node/server.js --external:vscode --format=cjs --platform=node --target=es2020",
     "lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
     "test": "sh ./scripts/e2e.sh"
   },
@@ -194,9 +209,17 @@
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
     "@vscode/vsce": "^2.18.0",
+    "buffer": "^6.0.3",
     "esbuild": "^0.17.11",
     "eslint": "^8.35.0",
     "mocha": "^9.2.1",
-    "typescript": "^4.9.5"
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "rimraf": "^4.4.1",
+    "terser-webpack-plugin": "^5.3.7",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.5",
+    "webpack": "^5.77.0",
+    "webpack-cli": "^5.0.1"
   }
 }

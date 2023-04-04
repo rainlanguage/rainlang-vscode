@@ -15,7 +15,7 @@
 		"url": "https://github.com/rainprotocol/rainlang-vscode/issues"
 	},
 	"dependencies": {
-		"@rainprotocol/rainlang": "git+https://github.com/rainprotocol/rainlang.git#cc6382e69b725197f8e930fefa08a4d0ce736f1f",
+		"@rainprotocol/rainlang": "github:rainprotocol/rainlang#d732259a3fe0bf721f13df30de57c45b4c71ba3b",
 		"vscode-languageserver": "^8.1.0",
 		"vscode-languageserver-textdocument": "^1.0.8"
 	}

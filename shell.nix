@@ -31,21 +31,17 @@ let
 	'';
 
 	build = pkgs.writeShellScriptBin "build" ''
-		npm run esbuild
+		npm run build
 	'';
 
 	build-prod = pkgs.writeShellScriptBin "build-prod" ''
-		npm run esbuild-prod
+		npm run build-prod
 	'';
 
 	build-all = pkgs.writeShellScriptBin "build-all" ''
 		flush-all
 		npm install
 		build
-	'';
-
-	watch = pkgs.writeShellScriptBin "watch" ''
-		npm run esbuild-watch
 	'';
 
 	lint = pkgs.writeShellScriptBin "lint" ''
@@ -65,7 +61,6 @@ let
 			ci-test
 			flush
 			flush-all
-			watch
 			lint
 		];
 
