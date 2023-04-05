@@ -24,30 +24,35 @@ It also includes an End-to-End test.
 
 ### Configuring Op Meta
 
-After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add the following property:
+After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add either of the following property:<br>
+- full op meta bytes as hex string:
 ```json
 "rainlang.opmeta": "0x123abcd...   // op meta compressed bytes in hex string"
 ```
-or
+- deployer address and subgraph api endpoint url:
 ```json
 "rainlang.opmeta": {
   "deployerAddress": "0x12345...",
-  "source": {
-    "subgraphUrl": "https://api.thegraph.com/..." 
-  }
+  "source": "https://api.thegraph.com/..." 
 }
 ``` 
-or
+- deployer address and network name:
 ```json
 "rainlang.opmeta": {
   "deployerAddress": "0x12345...",
-  "source": {
-    "chainId": 524289
-  }
+  "source": "mumbai"
+}
+- deployer address and chain id:
+```json
+"rainlang.opmeta": {
+  "deployerAddress": "0x12345...",
+  "source": 137
 }
 ```
-- `524289` is Mumbai (Polygon testnet) chain id.
-- if no `chainId` or `subgraphUrl` are provided, the default Mumbai subgraph will be used and if both are provided, subgraph URL will be prioritized.
+<br>
+
+`deployerAddress` is the address of the ExpressionDeployer contract.
+`source` can be either an evm network name or chain id or a subgraph api endpoint url.
 <br>
 
 ### Compilation
