@@ -6,37 +6,17 @@ import { getOpMetaFromSg, RainDocument } from '@rainprotocol/rainlang';
 // gets the op meta from subgraph
 export async function getOpMeta(config: {
 	deployerAddress: string, 
-	source: {
-		chainId?: number,
-		subgraphUrl?: string
-	}
+	source: string | number,
 }): Promise<string> {
 	try {
-		if (Object.keys(config.source).length === 0) {
-			return await getOpMetaFromSg(config.deployerAddress);
-		}
-		else {
-			if (Object.keys(config.source).length === 2) {
-				try {
-					return await getOpMetaFromSg(config.deployerAddress, config.source.subgraphUrl!);
-				}
-				catch {
-					try {
-						return await getOpMetaFromSg(config.deployerAddress, config.source.chainId!);
-					}
-					catch {
-						return "";
-					}
-				}
-			}
-			else {
-				if ("chainId" in config.source) return await getOpMetaFromSg(
-					config.deployerAddress, 
-					config.source.chainId
-				);
-				else return await getOpMetaFromSg(config.deployerAddress, config.source.subgraphUrl!);
-			}
-		}
+		if (typeof config.source === "number") return await getOpMetaFromSg(
+			config.deployerAddress, 
+			config.source
+		);
+		else return await getOpMetaFromSg(
+			config.deployerAddress, 
+			config.source
+		);
 	}
 	catch {
 		return "";

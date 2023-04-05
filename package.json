@@ -5,7 +5,7 @@
   "description": "Rain Protocol language (rainlang) support for vscode",
   "author": "Rain Protocol",
   "license": "CAL-1.0",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "main": "./dist/node/client",
   "browser": "./dist/browser/client",
@@ -115,8 +115,8 @@
       "properties": {
         "rainlang.opmeta": {
           "scope": "resource",
-          "description": "Controls the op meta used for parsing Rain documents, either op meta bytes as hex string or a deployer address with chain id or subgraph endpoint.",
-          "anyOf": [
+          "description": "Controls the op meta used for parsing Rain documents, either op meta bytes as hex string or a deployer address with network name or subgraph endpoint.",
+          "oneOf": [
             {
               "type": "string",
               "pattern": "^0x[a-fA-F0-9]+$"
@@ -134,21 +134,35 @@
                   "description": "The address of the interpreter deplyer to get the op meta from."
                 },
                 "source": {
-                  "type": "object",
-                  "description": "The source to query, either chain id of the network or subgraph endpoint URL, if both are provided, subgraph endpoint will be prioritized.",
-                  "properties": {
-                    "chainId": {
-                      "type": "integer",
-                      "default": 524289,
-                      "description": "The chain id of the evm network to get the op meta from."
+                  "oneOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "default": "mumbai",
+                          "enum": [
+                            "polygon",
+                            "mumbai"
+                          ]
+                        },
+                        {
+                          "type": "integer",
+                          "default": 524289,
+                          "enum": [
+                            524289,
+                            137
+                          ]
+                        }
+                      ]
                     },
-                    "subgraphUrl": {
+                    {
                       "type": "string",
                       "default": "https://api.thegraph.com/subgraphs/name/rainprotocol/interpreter-registry",
                       "pattern": "^https://api.thegraph.com/subgraphs/name/",
                       "description": "The subgraph endpoint URL to get the op meta from."
                     }
-                  }
+                  ],
+                  "description": "The source to get op meta from, either name or chain id of the evm network or subgraph endpoint URL."
                 }
               }
             }
