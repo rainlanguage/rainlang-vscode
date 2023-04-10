@@ -16,8 +16,18 @@ jobs:
           node-version: 16
           cache: 'npm'
 
+      # Install deps
       - name: Install Dependencies
         run: npm install
 
+      # Build the prod package
+      - name: Build
+        run: npm run build-prod
+
+      # Build the dev package
+      - name: Build
+        run: npm run build
+
+      # Lint the source code
       - name: Lint
         run: npm run lint

@@ -1,0 +1,121 @@
+name: Standard Publish
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+
+  publish:
+    runs-on: ubuntu-latest
+
+    # do not start if [skip-publish] and [skip publish] is found in commit msg
+    # configuration: 
+    # - you can change the keywords to your desired ones in the below "if" statement
+    if: contains(github.event.head_commit.message, '[skip-publish]') != true && contains(github.event.head_commit.message, '[skip publish]') != true
+
+    # All steps of the job depend on their previous step to finish successfully
+    steps:
+      # Checkout repo
+      - name: Checkout Repo
+        id: checkout
+        uses: actions/checkout@v3
+
+      # Install node
+      - name: Install NodeJS v16
+        id: node
+        if: steps.checkout.outcome == 'success'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+
+      # Install deps
+      - name: Install Dependencies
+        id: install
+        if: steps.node.outcome == 'success'
+        run: npm install
+
+      # Build the prod package
+      - name: Build
+        id: build
+        if: steps.install.outcome == 'success'
+        run: npm run build-prod
+
+      # Lint the source code
+      - name: Lint
+        id: lint
+        if: steps.build.outcome == 'success'
+        run: npm run lint
+
+      # Configure Git
+      - name: Git Config
+        id: git
+        if: steps.lint.outcome == 'success'
+        # set git user and email to github actions, 
+        # this email and user id will result in github user with github avatar in Github
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+
+      # Major Release
+      - name: Bump Major Version
+        id: major
+        # bump major version only if the commit msg ends with [major] keyword
+        # [major] keyword must be at the end of commit msg
+        # configuration: 
+        # - you can change the keyword to your desired one in the below "if" statement
+        if: steps.git.outcome == 'success' && endsWith(github.event.head_commit.message, '[major]')
+        # bump the major version with creating tag and commit and store the version in env
+        run: echo "NEW_VERSION=$(npm version major -m "Release %s")" >> $GITHUB_ENV
+
+      # Minor Release
+      - name: Bump Minor Version
+        id: minor
+        # bump minor version only if the commit msg ends with [minor] keyword
+        # [minor] keyword must be at the end of commit msg
+        # configuration: 
+        # - you can change the keyword to your desired one in the below "if" statement
+        if: steps.git.outcome == 'success' && endsWith(github.event.head_commit.message, '[minor]')
+        # bump the minor version with creating tag and commit and store the version in env
+        run: echo "NEW_VERSION=$(npm version minor -m "Release %s")" >> $GITHUB_ENV
+
+      # Patch Release
+      - name: Bump Patch Version
+        id: patch
+        # bump patch version only if [major] and [minor] are not present in commit msg
+        # will increase patch version for any other commits that don't have major and minor keywords
+        # configuration: 
+        # - alternatively you can set a keyword for bumping patch version with specific keyword
+        if: steps.git.outcome == 'success' && ! endsWith(github.event.head_commit.message, '[major]') && ! endsWith(github.event.head_commit.message, '[minor]')
+        # bump the patch version with creating tag and commit and store the version in env
+        run: echo "NEW_VERSION=$(npm version patch -m "Release %s")" >> $GITHUB_ENV
+
+      # Push changes and tag
+      - name: Push Changes To Remote
+        id: push
+        if: steps.major.outcome == 'success' || steps.minor.outcome == 'success' || steps.patch.outcome == 'success'
+        run: | 
+          git push origin 
+          git push -u origin ${{ env.NEW_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create gitHub release with built package archives
+      - name: Create GitHub Release
+        id: release
+        if: steps.push.outcome == 'success'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          name: Release ${{ env.NEW_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publish to vscode marketplace
+      - name: Publish To vscode Marketplace
+        if: steps.release.outcome == 'success'
+        run: y | npx vsce publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
