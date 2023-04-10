@@ -21,11 +21,11 @@ jobs:
         run: npm install
 
       # Build the prod package
-      - name: Build
+      - name: Build Prod
         run: npm run build-prod
 
       # Build the dev package
-      - name: Build
+      - name: Build Dev
         run: npm run build
 
       # Lint the source code
