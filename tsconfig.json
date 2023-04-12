@@ -12,10 +12,12 @@
 	],
 	"exclude": [
 		"node_modules",
-		".vscode-test"
+		".vscode-test",
+		".vscode-test-web"
 	],
 	"references": [
 		{ "path": "./client" },
-		{ "path": "./server" }
+		{ "path": "./server" },
+		{ "path": "./test" }
 	]
 }

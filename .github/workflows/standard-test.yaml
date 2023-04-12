@@ -31,3 +31,7 @@ jobs:
       # Lint the source code
       - name: Lint
         run: npm run lint
+
+      # Run the tests
+      - name: Test
+        run: npm test

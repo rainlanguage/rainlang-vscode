@@ -8,7 +8,7 @@ let
 		{ };
 
 	local-test = pkgs.writeShellScriptBin "local-test" ''
-		npm run test
+		npm test
 	'';
 
 	flush = pkgs.writeShellScriptBin "flush" ''
@@ -18,6 +18,8 @@ let
 	flush-all = pkgs.writeShellScriptBin "flush-all" ''
 		rm -rf dist
 		rm -rf server/out
+		rm -rf client/out
+		rm -rf test/out
 		rm -rf server/node_modules
 		rm -rf client/node_modules
 		rm -rf node_modules
@@ -48,6 +50,10 @@ let
 		npm run lint
 	'';
 
+	lint-fix = pkgs.writeShellScriptBin "lint-fix" ''
+		npm run lint-fix
+	'';
+
 	in
 	pkgs.stdenv.mkDerivation {
 		name = "shell";
@@ -62,6 +68,7 @@ let
 			flush
 			flush-all
 			lint
+			lint-fix
 		];
 
 		shellHook = ''
