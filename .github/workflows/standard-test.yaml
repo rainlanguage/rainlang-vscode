@@ -34,7 +34,7 @@ jobs:
 
       # Run the desktop tests using headless setup
       - name: Desktop Extension Test
-        uses: GabrielBB/xvfb-action@v1
+        uses: coactions/setup-xvfb@v1
         with:
           run: npm run test-desktop
 

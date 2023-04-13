@@ -54,7 +54,7 @@ jobs:
         id: test
         if: steps.lint.outcome == 'success'
         # needs headless setup
-        uses: GabrielBB/xvfb-action@v1
+        uses: coactions/setup-xvfb@v1
         with:
           run: npm test
 
