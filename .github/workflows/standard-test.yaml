@@ -34,7 +34,7 @@ jobs:
 
       # Set up display for tests
       - name: Start xvfb
-        if: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
         run: |
           /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
           echo ">>> Started xvfb"
