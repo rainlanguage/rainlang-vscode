@@ -31,3 +31,13 @@ jobs:
       # Lint the source code
       - name: Lint
         run: npm run lint
+
+      # Run the desktop tests using headless setup
+      - name: Desktop Extension Test
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: npm run test-desktop
+
+      # Run the web extention tests
+      - name: Web Extension Test
+        run: npm run test-web

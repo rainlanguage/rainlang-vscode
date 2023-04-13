@@ -2,6 +2,8 @@
 .vscode/**
 .github
 .github/**
+.vscode-test
+.vscode-test-web
 .gitignore
 # **/*.ts
 # **/*.map
@@ -22,6 +24,8 @@ node_modules
 server/
 client/
 scripts/
+test/
+fixture/
 tsconfig.json
 .env
 *.rl
@@ -30,4 +34,5 @@ tsconfig.json
 *.vsix
 webpack.dev.js
 webpack.prod.js
-
+.eslintrc.js
+.eslintignore
