@@ -10,7 +10,7 @@ const webpack = require("webpack");
 const TerserPlugin = require("terser-webpack-plugin");
 
 /** @type WebpackConfig */
-const client = {
+const clientConfig = {
     context: path.join(__dirname, "client"),
     mode: "none",
     target: "webworker", // web extensions run in a webworker context
@@ -53,7 +53,7 @@ const client = {
 };
 
 /** @type WebpackConfig */
-const server = {
+const serverConfig = {
     context: path.join(__dirname, "server"),
     mode: "none",
     target: "webworker", // web extensions run in a webworker context
@@ -100,4 +100,4 @@ const server = {
     devtool: "source-map",
 };
 
-module.exports = [client, server];
+module.exports = [clientConfig, serverConfig];
