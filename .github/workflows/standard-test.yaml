@@ -32,17 +32,22 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Set up display for desktop headless test
-      - name: Set Virtual Display
-        run: |
-          /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-          echo ">>> Started xvfb"
+      # # Set up display for desktop headless test
+      # - name: Set Virtual Display
+      #   run: |
+      #     /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+      #     echo ">>> Started xvfb"
 
-      # Run the desktop extension tests
-      - name: Desktop Extension Test
-        run: npm run test-desktop
-        env: 
-            DISPLAY: ':99.0'
+      - name: Run headless test
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: npm run test-desktop
+
+      # # Run the desktop extension tests
+      # - name: Desktop Extension Test
+      #   run: npm run test-desktop
+      #   env: 
+      #       DISPLAY: ':99.0'
 
       # Run the web extention tests
       - name: Web Extension Test
