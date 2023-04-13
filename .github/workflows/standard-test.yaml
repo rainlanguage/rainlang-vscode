@@ -41,8 +41,8 @@ jobs:
       # Run the desktop extension tests
       - name: Desktop Extension Test
         run: npm run test-desktop
-      env: 
-          DISPLAY: ':99.0'
+        env: 
+            DISPLAY: ':99.0'
 
       # Run the web extention tests
       - name: Web Extension Test
