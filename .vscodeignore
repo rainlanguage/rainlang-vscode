@@ -25,7 +25,7 @@ server/
 client/
 scripts/
 test/
-fixture/
+workspace-dev/
 tsconfig.json
 .env
 *.rl

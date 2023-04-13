@@ -64,7 +64,10 @@ connection.onInitialize(async(params: InitializeParams) => {
         capabilities: {
             textDocumentSync: TextDocumentSyncKind.Incremental,
             completionProvider: {
-                resolveProvider: true
+                resolveProvider: true,
+                completionItem: {
+                    labelDetailsSupport: true
+                }
             },
             hoverProvider: true,
             executeCommandProvider: {

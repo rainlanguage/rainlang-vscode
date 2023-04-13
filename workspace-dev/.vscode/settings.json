@@ -1,0 +1,7 @@
+// set the opmeta for this fixture workspace to be used as default
+{
+	"rainlang.opmeta": {
+		"deployerAddress": "0xcddf36a214a13a98ce6c5d62ef0a5f7913b26c9f",
+		"source": "polygon"
+	}
+}
