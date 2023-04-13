@@ -49,21 +49,14 @@ jobs:
         if: steps.build.outcome == 'success'
         run: npm run lint
 
-      # Set up display for desktop headless test
-      - name: Set Virtual Display
-        id: display
-        if: steps.lint.outcome == 'success'
-        run: |
-          /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-          echo ">>> Started xvfb"
-
       # Run the tests
       - name: Test
         id: test
-        if: steps.display.outcome == 'success'
-        run: npm test
-        env: 
-          DISPLAY: ':99.0'
+        if: steps.lint.outcome == 'success'
+        # needs headless setup
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: npm test
 
       # Configure Git
       - name: Git Config
