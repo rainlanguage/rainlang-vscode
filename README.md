@@ -1,23 +1,21 @@
-# Rain Language Support for Visual Studio Code (vscode extention)
+# Rain Language Implementation for Visual Studio Code
 
-Rain language support for vscode. Uses Rain Language Services from [rainlang](https://github.com/rainprotocol/rainlang) repo under the hood.
-<br>
-
-## Functionality
-
-Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions and also syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates), example:
-```typescript
-// rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
-const myExp = rainlang`_: add(1 2);`
-```
-<br>
-
+Rain language implementation for vscode. Uses Rain Language Services from [rainlang](https://github.com/rainprotocol/rainlang) repo under the hood.
 It has the following language features:
 - Completions
 - Diagnostics
 - Hovers
 
 It also includes an End-to-End test.
+<br>
+
+## Functionality
+
+Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
+```typescript
+// rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
+const myExp = rainlang`_: add(1 2);`
+```
 <br>
 
 ## Tutorial
@@ -27,26 +25,35 @@ It also includes an End-to-End test.
 After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add either of the following property:<br>
 - full op meta bytes as hex string:
 ```json
-"rainlang.opmeta": "0x123abcd...   // op meta compressed bytes in hex string"
+{
+  "rainlang.opmeta": "0x123abcd...   // op meta compressed bytes in hex string"
+}
 ```
 - deployer address and subgraph api endpoint url:
 ```json
-"rainlang.opmeta": {
-  "deployerAddress": "0x12345...",
-  "source": "https://api.thegraph.com/..." 
+{
+  "rainlang.opmeta": {
+    "deployerAddress": "0x12345...",
+    "source": "https://api.thegraph.com/..." 
+  }
 }
 ``` 
 - deployer address and network name:
 ```json
-"rainlang.opmeta": {
-  "deployerAddress": "0x12345...",
-  "source": "mumbai"
+{
+  "rainlang.opmeta": {
+    "deployerAddress": "0x12345...",
+    "source": "mumbai"
+  }
 }
+```
 - deployer address and chain id:
 ```json
-"rainlang.opmeta": {
-  "deployerAddress": "0x12345...",
-  "source": 137
+{
+  "rainlang.opmeta": {
+    "deployerAddress": "0x12345...",
+    "source": 137
+  }
 }
 ```
 <br>
@@ -57,7 +64,7 @@ After installing the extention from vscode marketplace, if `.vscode/settings.jso
 
 ### Compilation
 
-Use [Rainlang Compile]() command accessible from Command Palette or from editor's context menu (right-click) to compile the selected rainlang document and get the ExpressionConfig.
+Use `Rainlang Compile` command accessible from Command Palette or from editor's context menu (right-click) to compile the selected rainlang document and get the ExpressionConfig.
 <br>
 
 ## Developers Guide
@@ -76,16 +83,29 @@ Use [Rainlang Compile]() command accessible from Command Palette or from editor'
 <br>
 
 ## Structure
-
 ```
 .
-├── client // Rain Language Client
-│   ├── src
-│   │   ├── test // End to End tests for Language Client / Server
-│   │   └── extension.ts // Language Client entry point
-├── package.json // The extension manifest.
-└── server // Rain Language Server
-    └── src
-        └── server.ts // Language Server entry point
+├──── client                                    // Rain Language Client
+│     ├──── src
+│     │     ├──── nodeClient.ts                 // Desktop extension client entry point
+│     │     └──── browserClient.ts              // Web extention client entry point
+├──── server                                    // Rain Language Server
+│     ├──── src
+│     │     ├──── nodeServer.ts                 // Desktop extension server entry point
+│     │     └──── browserServer.ts              // Web extension server entry point
+├──── syntaxes                                  // Rain language syntaxes
+│     ├──── rainlang-syntax.json                // Rainlang syntaxes
+│     ├──── rainlang-injection.json             // Rainlang injection syntaxes for inline typescript and javascript
+├──── test                                      // End to End tests for Language Client / Server
+│     ├──── web
+│     │     ├──── index.ts                      // Web extension test entry point
+│     │     └──── runTest.ts                    // Web extention e2e test runner
+│     ├──── desktop
+│     │     ├──── index.ts                      // Desktop extention test entry point
+│     │     └──── runTest.ts                    // Desktop extention e2e test runner
+├──── docs                                      // Documents (images, icons, ...)
+├──── workspace-dev                             // Extension Development Host workspace
+├──── package.json                              // The extension manifest
+├──── rain-language-configuration.json          // Rain language configurations
+└──── shell.nix                                 // Nix shell configuration
 ```
-<br>

@@ -2,7 +2,7 @@
   "name": "rainlang-vscode",
   "displayName": "Rain Language",
   "publisher": "rainprotocol",
-  "description": "Rain Protocol language (rainlang) support for vscode",
+  "description": "Rain Protocol language (rainlang) implementation for vscode",
   "author": "Rain Protocol",
   "license": "CAL-1.0",
   "version": "0.1.4",
