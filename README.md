@@ -16,7 +16,6 @@ Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` ext
 // rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
 const myExp = rainlang`_: add(1 2);`
 ```
-<br>
 
 ## Tutorial
 
@@ -80,7 +79,6 @@ Use `Rainlang Compile` command accessible from Command Palette or from editor's 
   - Start typing your expression and get the completion for opcodes.
   - Hover over some of the opcodes or values to get hover items.
   - The diagnostics will be generated automatically.
-<br>
 
 ## Structure
 ```
