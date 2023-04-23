@@ -1,4 +1,4 @@
-import { getOpMeta } from "./utils";
+import { embeddedRainlang, getOpMeta, isInRange } from "./utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { 
     getRainHover, 
@@ -35,13 +35,13 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 const rainDocuments: Map<string, RainDocument> = new Map();
 const inlineRainDocuments: Map<
 	string, 
-	{ rainDocument: RainDocument, range: Range, hasLiteralTemplate: boolean }[]
+	{ rainDocument: RainDocument, range: Range }[]
 > = new Map();
 
 let opmeta = "";
 let hasWorkspaceFolderCapability = false;
 
-connection.onInitialize(async(params: InitializeParams) => {
+connection.onInitialize( async(params: InitializeParams) => {
     const capabilities = params.capabilities;
     hasWorkspaceFolderCapability = !!(
         capabilities.workspace && !!capabilities.workspace.workspaceFolders
@@ -155,21 +155,42 @@ connection.onDidChangeConfiguration(async() => {
     });
 });
 
-documents.onDidOpen(v => {
+documents.onDidOpen((v) => {
     if (v.document.languageId === "rainlang") {
         const _rainDoc = new RainDocument(v.document, opmeta);
         rainDocuments.set(v.document.uri, _rainDoc);
         doValidate(_rainDoc);
     }
-    // else {
-    // 	const _embeded = embeddedRainlang(v.document, opmeta);
-    // 	if (_embeded) {
-    // 		inlineRainDocuments.set(v.document.uri, _embeded);
-    // 		// for (let i = 0; i < _embeded.length; i++) {
-    // 		// 	doValidate(_embeded[i].rainDocument, v.document.uri);
-    // 		// }
-    // 	}
-    // }
+    else {
+        // const _embeded = embeddedRainlang(v.document, opmeta);
+        // if (_embeded) {
+        //     inlineRainDocuments.set(v.document.uri, _embeded);
+        //     // for (let i = 0; i < _embeded.length; i++) {
+        //     // 	doValidate(_embeded[i].rainDocument, v.document.uri);
+        //     // }
+        // }
+        embeddedRainlang(v.document, opmeta).then(
+            (e) => {
+                inlineRainDocuments.set(v.document.uri, e);
+                if (!e.length) connection.sendDiagnostics({uri: v.document.uri, diagnostics:[]});
+                else e.forEach(async(r) => {
+                    const diagnostics = (await getRainDiagnostics(
+                        r.rainDocument, 
+                        { clientCapabilities: ClientCapabilities.ALL }
+                    ));
+                    diagnostics.forEach(
+                        t => t.relatedInformation![0].location.uri = v.document.uri
+                    );
+                    connection.sendDiagnostics({
+                        uri: v.document.uri,
+                        diagnostics
+                    });
+                });
+            }
+        ).catch(
+            e => console.log(e)
+        );
+    }
 });
 
 documents.onDidClose(v => {
@@ -177,9 +198,9 @@ documents.onDidClose(v => {
     if (v.document.languageId === "rainlang") {
         rainDocuments.delete(v.document.uri);
     }
-    // else {
-    // 	inlineRainDocuments.delete(v.document.uri);
-    // }
+    else {
+        inlineRainDocuments.delete(v.document.uri);
+    }
 });
 
 documents.onDidChangeContent(change => {
@@ -195,19 +216,42 @@ documents.onDidChangeContent(change => {
             doValidate(_rainDoc);
         }
     }
-    // else {
-    // 	inlineRainDocuments.delete(change.document.uri);
-    // 	const _embeded = embeddedRainlang(change.document, opmeta);
-    // 	if (_embeded) {
-    // 		inlineRainDocuments.set(change.document.uri, _embeded);
-    // 		// for (let i = 0; i < _embeded.length; i++) {
-    // 		// 	doValidate(_embeded[i].rainDocument, change.document.uri);
-    // 		// }
-    // 	}
-    // }
+    else {
+        inlineRainDocuments.delete(change.document.uri);
+        // const _embeded = embeddedRainlang(change.document, opmeta);
+        // if (_embeded) {
+        //     inlineRainDocuments.set(change.document.uri, _embeded);
+        //     for (let i = 0; i < _embeded.length; i++) {
+        //         doValidate(_embeded[i].rainDocument, change.document.uri);
+        //     }
+        // }
+        embeddedRainlang(change.document, opmeta).then(
+            (e) => {
+                inlineRainDocuments.set(change.document.uri, e);
+                if (!e.length) connection.sendDiagnostics(
+                    {uri: change.document.uri, diagnostics:[]}
+                );
+                else e.forEach(async(r) => {
+                    const diagnostics = (await getRainDiagnostics(
+                        r.rainDocument, 
+                        { clientCapabilities: ClientCapabilities.ALL }
+                    ));
+                    diagnostics.forEach(
+                        t => t.relatedInformation![0].location.uri = change.document.uri
+                    );
+                    connection.sendDiagnostics({
+                        uri: change.document.uri,
+                        diagnostics
+                    });
+                });
+            }
+        ).catch(
+            e => console.log(e)
+        );
+    }
 });
 
-async function doValidate(rainDocument: RainDocument, uri?: string): Promise<void> {
+async function doValidate(rainDocument: RainDocument, uri?: string, set = true): Promise<void> {
     const _td = rainDocument.getTextDocument();
     const diagnostics: Diagnostic[] = await getRainDiagnostics(
         rainDocument, 
@@ -233,17 +277,17 @@ connection.onCompletion(
         ) {
             _rd = rainDocuments.get(params.textDocument.uri);
         }
-        // else {
-        // 	const _inline = inlineRainDocuments.get(params.textDocument.uri);
-        // 	if (_inline) {
-        // 		for (let i = 0; i < _inline.length; i++) {
-        // 			if (isInRange(_inline[i].range, params.position)) {
-        // 				_rd = _inline[i].rainDocument;
-        // 				break;
-        // 			}
-        // 		}
-        // 	}
-        // }
+        else {
+            const _inline = inlineRainDocuments.get(params.textDocument.uri);
+            if (_inline) {
+                for (let i = 0; i < _inline.length; i++) {
+                    if (isInRange(_inline[i].range, params.position)) {
+                        _rd = _inline[i].rainDocument;
+                        break;
+                    }
+                }
+            }
+        }
         if (_rd) {
             const completions = getRainCompletion(
                 _rd, 
@@ -273,17 +317,17 @@ connection.onHover(
         ) {
             _rd = rainDocuments.get(params.textDocument.uri);
         }
-        // else {
-        // 	const _inline = inlineRainDocuments.get(params.textDocument.uri);
-        // 	if (_inline) {
-        // 		for (let i = 0; i < _inline.length; i++) {
-        // 			if (isInRange(_inline[i].range, params.position)) {
-        // 				_rd = _inline[i].rainDocument;
-        // 				break;
-        // 			}
-        // 		}
-        // 	}
-        // }
+        else {
+            const _inline = inlineRainDocuments.get(params.textDocument.uri);
+            if (_inline) {
+                for (let i = 0; i < _inline.length; i++) {
+                    if (isInRange(_inline[i].range, params.position)) {
+                        _rd = _inline[i].rainDocument;
+                        break;
+                    }
+                }
+            }
+        }
         if (_rd) {
             return getRainHover(
                 _rd, 

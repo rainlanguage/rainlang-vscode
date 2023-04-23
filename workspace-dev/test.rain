@@ -1,5 +1,5 @@
 /**
  * This is test
  */
-_: add(1 2),
-_: mul(3 4);
+a: add(1 2),
+b: mul(1 a);
