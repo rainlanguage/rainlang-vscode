@@ -46,7 +46,7 @@ export async function activate(docUri: vscode.Uri): Promise<{
         }
         const doc = await vscode.workspace.openTextDocument(docUri);
         const editor = await vscode.window.showTextDocument(doc);
-        await sleep(300); // wait a bit for document to get parsed
+        await sleep(500); // wait a bit for document to get parsed
         return { ext, doc, editor };
     } 
     catch (e) {
