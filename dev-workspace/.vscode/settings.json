@@ -1,4 +1,4 @@
-// set the opmeta for this fixture workspace to be used as default
+// set additional subgraphs for extention development host workspace
 // {
 // 	"rainlang.subgraphs": [
 //     "https://api.thegraph.com/subgraphs/name/example/example"
