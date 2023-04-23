@@ -1,27 +1,19 @@
-import { getOpMeta } from "./utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { 
-    getRainHover, 
+    MetaStore,
     RainDocument, 
     ClientCapabilities, 
-    getRainCompletion, 
-    getRainDiagnostics 
+    RainLanguageServices,
+    getRainLanguageServices
 } from "@rainprotocol/rainlang";
 import {
-    createConnection,
-    TextDocuments,
     Diagnostic,
+    TextDocuments,
+    createConnection,
     ProposedFeatures,
-    InitializeParams,
-    DidChangeConfigurationNotification,
-    CompletionItem,
-    TextDocumentSyncKind,
     InitializeResult,
-    CompletionParams,
-    HoverParams,
-    Range,
-    Hover,
-    ExecuteCommandParams
+    TextDocumentSyncKind,
+    DidChangeConfigurationNotification 
 } from "vscode-languageserver/node";
 
 
@@ -32,27 +24,27 @@ const connection = createConnection(ProposedFeatures.all);
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-const rainDocuments: Map<string, RainDocument> = new Map();
-const inlineRainDocuments: Map<
-	string, 
-	{ rainDocument: RainDocument, range: Range, hasLiteralTemplate: boolean }[]
-> = new Map();
-
-let opmeta = "";
+let langServices: RainLanguageServices;
+const metaStore = new MetaStore();
 let hasWorkspaceFolderCapability = false;
 
-connection.onInitialize(async(params: InitializeParams) => {
+connection.onInitialize(async(params) => {
     const capabilities = params.capabilities;
     hasWorkspaceFolderCapability = !!(
         capabilities.workspace && !!capabilities.workspace.workspaceFolders
     );
 
-    // assign op meta at initialization
-    if (params.initializationOptions?.opmeta) {
-        opmeta = typeof params.initializationOptions.opmeta === "string"
-            ? params.initializationOptions.opmeta
-            : await getOpMeta(params.initializationOptions.opmeta);
+    // add subgraphs to metaStore
+    if (params.initializationOptions?.subgraphs) {
+        for (const sg of params.initializationOptions.subgraphs) {
+            metaStore.addSubgraph(sg);
+        }
     }
+
+    langServices = getRainLanguageServices({
+        clientCapabilities: ClientCapabilities.ALL,
+        metaStore
+    });
 
     const result: InitializeResult = {
         capabilities: {
@@ -89,36 +81,78 @@ connection.onInitialized(() => {
 });
 
 // executes rain compile command
-connection.onExecuteCommand((e: ExecuteCommandParams) => {
+connection.onExecuteCommand(async(e) => {
     if (e.command === "_compile") {
         const langId = e.arguments![0];
         const uri = e.arguments![1];
         // const range = e.arguments![2];
         if (langId === "rainlang") {
-            const _rainDoc = rainDocuments.get(uri);
-            if (_rainDoc) return _rainDoc.getExpressionConfig();
+            const _doc = documents.get(uri);
+            if (_doc) {
+                const _rainDoc = await RainDocument.create(_doc, metaStore);
+                return _rainDoc.getExpressionConfig();
+            }
             else return null;
         }
         else return null;
-        // else {
-        // 	const _inline = inlineRainDocuments.get(uri);
-        // 	if (_inline) {
-        // 		for (let i = 0; i < _inline.length; i++) {
-        // 			if (
-        // 				isInRange(_inline[i].range, range.start) && 
-        // 				isInRange(_inline[i].range, range.end)
-        // 			) {
-        // 				if (!_inline[i].hasLiteralTemplate) 
-        // 					return _inline[i].rainDocument.getExpressionConfig();
-        // 				else return null;
-        // 			}
-        // 		}
-        // 		return null;
-        // 	}
-        // 	return null;
-        // }
     }
 });
+
+connection.onDidChangeConfiguration(async() => {
+    const settings = await getSetting();
+    if (settings?.subgraphs) {
+        for (const sg of settings.subgraphs) {
+            metaStore.addSubgraph(sg);
+        }
+    }
+    documents.all().forEach(v => {
+        if (v.languageId === "rainlang") doValidate(v);
+    });
+});
+
+documents.onDidOpen(v => {
+    if (v.document.languageId === "rainlang") doValidate(v.document);
+});
+
+documents.onDidClose(v => {
+    connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
+});
+
+documents.onDidChangeContent(change => {
+    if (change.document.languageId === "rainlang") doValidate(change.document);
+});
+
+connection.onDidChangeWatchedFiles(_change => {
+    // Monitored files have change in VSCode
+    connection.console.log("We received an file change event");
+});
+
+connection.onCompletion(params => {
+    const textDoc = documents.get(params.textDocument.uri);
+    if (textDoc) return langServices.doComplete(
+        textDoc, 
+        params.position
+    );
+    else return null;
+});
+
+connection.onCompletionResolve(item => item);
+
+connection.onHover(params => {
+    const textDoc = documents.get(params.textDocument.uri);
+    if (textDoc) return langServices.doHover(
+        textDoc, 
+        params.position
+    );
+    else return null;
+});
+
+// Make the text document manager listen on the connection
+// for open, change and close text document events
+documents.listen(connection);
+
+// Listen on the connection
+connection.listen();
 
 // gets the rainlang settings
 async function getSetting() {
@@ -127,177 +161,12 @@ async function getSetting() {
     });
 }
 
-connection.onDidChangeConfiguration(async() => {
-    const settings = await getSetting();
-    if (settings?.opmeta) {
-        opmeta = typeof settings.opmeta === "string"
-            ? settings.opmeta
-            : await getOpMeta(settings.opmeta);
-    }
-    else opmeta = "";
-    rainDocuments.clear();
-    inlineRainDocuments.clear();
-    documents.all().forEach(v => {
-        if (v.languageId === "rainlang") {
-            const _rainDoc = new RainDocument(v, opmeta);
-            rainDocuments.set(v.uri, _rainDoc);
-            doValidate(_rainDoc);
-        }
-        // else {
-        // 	const _embeded = embeddedRainlang(v, opmeta);
-        // 	if (_embeded) {
-        // 		inlineRainDocuments.set(v.uri, _embeded);
-        // 		// for (let i = 0; i < _embeded.length; i++) {
-        // 		// 	doValidate(_embeded[i].rainDocument, v.uri);
-        // 		// }
-        // 	}
-        // }
-    });
-});
-
-documents.onDidOpen(v => {
-    if (v.document.languageId === "rainlang") {
-        const _rainDoc = new RainDocument(v.document, opmeta);
-        rainDocuments.set(v.document.uri, _rainDoc);
-        doValidate(_rainDoc);
-    }
-    // else {
-    // 	const _embeded = embeddedRainlang(v.document, opmeta);
-    // 	if (_embeded) {
-    // 		inlineRainDocuments.set(v.document.uri, _embeded);
-    // 		// for (let i = 0; i < _embeded.length; i++) {
-    // 		// 	doValidate(_embeded[i].rainDocument, v.document.uri);
-    // 		// }
-    // 	}
-    // }
-});
-
-documents.onDidClose(v => {
-    connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
-    if (v.document.languageId === "rainlang") {
-        rainDocuments.delete(v.document.uri);
-    }
-    // else {
-    // 	inlineRainDocuments.delete(v.document.uri);
-    // }
-});
-
-documents.onDidChangeContent(change => {
-    if (change.document.languageId === "rainlang") {
-        const _rainDoc = rainDocuments.get(change.document.uri);
-        if (_rainDoc) {
-            _rainDoc.update(change.document);
-            doValidate(_rainDoc);
-        }
-        else {
-            const _rainDoc = new RainDocument(change.document, opmeta);
-            rainDocuments.set(change.document.uri, _rainDoc);
-            doValidate(_rainDoc);
-        }
-    }
-    // else {
-    // 	inlineRainDocuments.delete(change.document.uri);
-    // 	const _embeded = embeddedRainlang(change.document, opmeta);
-    // 	if (_embeded) {
-    // 		inlineRainDocuments.set(change.document.uri, _embeded);
-    // 		// for (let i = 0; i < _embeded.length; i++) {
-    // 		// 	doValidate(_embeded[i].rainDocument, change.document.uri);
-    // 		// }
-    // 	}
-    // }
-});
-
-async function doValidate(rainDocument: RainDocument, uri?: string): Promise<void> {
-    const _td = rainDocument.getTextDocument();
-    const diagnostics: Diagnostic[] = await getRainDiagnostics(
-        rainDocument, 
-        { clientCapabilities: ClientCapabilities.ALL }
+// validate a document
+async function doValidate(textDocument: TextDocument): Promise<void> {
+    const diagnostics: Diagnostic[] = await langServices.doValidation(
+        textDocument
     );
 
     // Send the computed diagnostics to VSCode.
-    connection.sendDiagnostics({ uri: uri ? uri : _td.uri, diagnostics });
+    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
-
-connection.onDidChangeWatchedFiles(_change => {
-    // Monitored files have change in VSCode
-    connection.console.log("We received an file change event");
-});
-
-connection.onCompletion(
-    (params: CompletionParams): CompletionItem[] => {
-        let _rd: RainDocument | undefined;
-        if (
-            params.textDocument.uri.endsWith(".rain") ||
-			params.textDocument.uri.endsWith(".rainlang") ||
-			params.textDocument.uri.endsWith(".rl")
-        ) {
-            _rd = rainDocuments.get(params.textDocument.uri);
-        }
-        // else {
-        // 	const _inline = inlineRainDocuments.get(params.textDocument.uri);
-        // 	if (_inline) {
-        // 		for (let i = 0; i < _inline.length; i++) {
-        // 			if (isInRange(_inline[i].range, params.position)) {
-        // 				_rd = _inline[i].rainDocument;
-        // 				break;
-        // 			}
-        // 		}
-        // 	}
-        // }
-        if (_rd) {
-            const completions = getRainCompletion(
-                _rd, 
-                params.position, 
-                { clientCapabilities: ClientCapabilities.ALL }
-            );
-            if (completions) return completions;
-            else return [];
-        }
-        else return [];
-    }
-);
-
-connection.onCompletionResolve(
-    (item: CompletionItem): CompletionItem => {
-        return item;
-    }
-);
-
-connection.onHover(
-    (params: HoverParams): Hover | null => {
-        let _rd: RainDocument | undefined;
-        if (
-            params.textDocument.uri.endsWith(".rain") ||
-			params.textDocument.uri.endsWith(".rainlang") ||
-			params.textDocument.uri.endsWith(".rl")
-        ) {
-            _rd = rainDocuments.get(params.textDocument.uri);
-        }
-        // else {
-        // 	const _inline = inlineRainDocuments.get(params.textDocument.uri);
-        // 	if (_inline) {
-        // 		for (let i = 0; i < _inline.length; i++) {
-        // 			if (isInRange(_inline[i].range, params.position)) {
-        // 				_rd = _inline[i].rainDocument;
-        // 				break;
-        // 			}
-        // 		}
-        // 	}
-        // }
-        if (_rd) {
-            return getRainHover(
-                _rd, 
-                params.position, 
-                { clientCapabilities: ClientCapabilities.ALL }
-            );
-        }
-        else return null;
-    }
-);
-
-// Make the text document manager listen on the connection
-// for open, change and close text document events
-documents.listen(connection);
-
-// Listen on the connection
-connection.listen();

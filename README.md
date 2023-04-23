@@ -19,46 +19,18 @@ const myExp = rainlang`_: add(1 2);`
 
 ## Tutorial
 
-### Configuring Op Meta
+### Configure Additional Subgraphs For Metas
 
-After installing the extention from vscode marketplace, if `.vscode/settings.json` does not already exists in your workspace, create it and add either of the following property:<br>
-- full op meta bytes as hex string:
+By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified meta of a meta hash, however, you can add more subgraph endpoint URLs by adding the following to the `user` or `workspace` vscode json settings i.e. `settings.json`:<br>
 ```json
 {
-  "rainlang.opmeta": "0x123abcd...   // op meta compressed bytes in hex string"
+  "rainlang.subgraphs": [
+    "https://api.thegraph.com/subgraphs/name/example1/example1",
+    "https://api.thegraph.com/subgraphs/name/example2/example2"
+  ]
 }
 ```
-- deployer address and subgraph api endpoint url:
-```json
-{
-  "rainlang.opmeta": {
-    "deployerAddress": "0x12345...",
-    "source": "https://api.thegraph.com/..." 
-  }
-}
-``` 
-- deployer address and network name:
-```json
-{
-  "rainlang.opmeta": {
-    "deployerAddress": "0x12345...",
-    "source": "mumbai"
-  }
-}
-```
-- deployer address and chain id:
-```json
-{
-  "rainlang.opmeta": {
-    "deployerAddress": "0x12345...",
-    "source": 137
-  }
-}
-```
-<br>
-
-`deployerAddress` is the address of the ExpressionDeployer contract.
-`source` can be either an evm network name or chain id or a subgraph api endpoint url.
+Specified subgraph URLs must be under `https://api.thegraph.com/subgraphs/name/` domain.
 <br>
 
 ### Compilation
@@ -73,7 +45,7 @@ Use `Rainlang Compile` command accessible from Command Palette or from editor's 
 - Switch to the Run and Debug View in the Sidebar (Ctrl+Shift+D).
 - Select `Launch Client Desktop` for desktop mode or `Launch Client Web` for browser mode from the drop down (if it is not already).
 - Press ▷ to run the launch config (F5) which will open a new instance of vscode called [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.).
-- The [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, will open a pre configured workspace (the `./workspace-dev` folder from root of this repo), you can configure `.vscode/settings.json` to set the `opmeta` as explained above in Tutorial section.
+- The [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, will open a pre configured workspace (the `./dev-workspace` folder from root of this repo), you can configure `.vscode/settings.json` to set additional subgraphs URLs as explained above in Tutorial section.
 - Start editing the `test.rain` file.
 - Alternatively create a document that ends with `.rain` to start the language mode for that.
   - Start typing your expression and get the completion for opcodes.
@@ -102,7 +74,7 @@ Use `Rainlang Compile` command accessible from Command Palette or from editor's 
 │     │     ├──── index.ts                      // Desktop extention test entry point
 │     │     └──── runTest.ts                    // Desktop extention e2e test runner
 ├──── docs                                      // Documents (images, icons, ...)
-├──── workspace-dev                             // Extension Development Host workspace
+├──── dev-workspace                             // Extension Development Host workspace
 ├──── package.json                              // The extension manifest
 ├──── rain-language-configuration.json          // Rain language configurations
 └──── shell.nix                                 // Nix shell configuration

@@ -113,60 +113,15 @@
       "type": "object",
       "title": "Rain Language",
       "properties": {
-        "rainlang.opmeta": {
+        "rainlang.subgraphs": {
           "scope": "resource",
-          "description": "Controls the op meta used for parsing Rain documents, either op meta bytes as hex string or a deployer address with network name or subgraph endpoint.",
-          "oneOf": [
-            {
-              "type": "string",
-              "pattern": "^0x[a-fA-F0-9]+$"
-            },
-            {
-              "type": "object",
-              "required": [
-                "deployerAddress",
-                "source"
-              ],
-              "properties": {
-                "deployerAddress": {
-                  "type": "string",
-                  "pattern": "^0x[a-fA-F0-9]{40}$",
-                  "description": "The address of the interpreter deplyer to get the op meta from."
-                },
-                "source": {
-                  "oneOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "default": "mumbai",
-                          "enum": [
-                            "polygon",
-                            "mumbai"
-                          ]
-                        },
-                        {
-                          "type": "integer",
-                          "default": 524289,
-                          "enum": [
-                            524289,
-                            137
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "default": "https://api.thegraph.com/subgraphs/name/rainprotocol/interpreter-registry",
-                      "pattern": "^https://api.thegraph.com/subgraphs/name/",
-                      "description": "The subgraph endpoint URL to get the op meta from."
-                    }
-                  ],
-                  "description": "The source to get op meta from, either name or chain id of the evm network or subgraph endpoint URL."
-                }
-              }
-            }
-          ]
+          "description": "Additional subgraph endpoint URLs to include when searching for metas of specified meta hashes in a rainlang document.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https://api.thegraph.com/subgraphs/name/",
+            "minItems": 1
+          }
         },
         "rainlang.trace.server": {
           "scope": "window",
@@ -217,9 +172,9 @@
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "compile-test": "rimraf ./test/out && tsc -b ./test && webpack -c ./test/webpack.config.js",
-    "test": "npm run compile-test && node ./test/out/desktop/runTest.js && node ./test/out/web/runTest.js",
-    "test-web": "npm run compile-test && node ./test/out/web/runTest.js",
-    "test-desktop": "npm run compile-test && node ./test/out/desktop/runTest.js"
+    "test": "npm run build && npm run compile-test && node ./test/out/desktop/runTest.js && node ./test/out/web/runTest.js",
+    "test-web": "npm run build && npm run compile-test && node ./test/out/web/runTest.js",
+    "test-desktop": "npm run build && npm run compile-test && node ./test/out/desktop/runTest.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
