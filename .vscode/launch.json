@@ -9,7 +9,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceRoot}",
-				"${workspaceFolder}/workspace-dev"		// workspace to open automatically
+				"${workspaceFolder}/dev-workspace"		// workspace to open automatically
 			],
 			"outFiles": ["${workspaceRoot}/dist/node/**/*.js"],
 			"autoAttachChildProcesses": true,
@@ -27,7 +27,7 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceRoot}", 
 				"--extensionDevelopmentKind=web",
-				"${workspaceFolder}/workspace-dev"		// workspace to open automatically
+				"${workspaceFolder}/dev-workspace"		// workspace to open automatically
 			],
 			"outFiles": ["${workspaceRoot}/dist/browser/**/*.js"],
 			"preLaunchTask": {

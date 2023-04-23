@@ -6,6 +6,9 @@
       "include": "#comment"
     },
     {
+      "include": "#hash"
+    },
+    {
       "include": "#operator"
     },
     {
@@ -44,6 +47,17 @@
     "operator-assignment": {
       "match": "(\\:)",
       "name": "keyword.operator.assignment.rainlang"
+    },
+    "hash": {
+      "match": "(?<=\\s|^)(@)(0x[a-fA-F0-9]+)(?=\\s|$)",
+      "captures": {
+        "1": {
+          "name": "storage.meta-hash.rainlang"
+        },
+        "2": {
+          "name": "variable.other.constant.meta-hash.rainlang"
+        }
+      }
     },
     "number": {
       "patterns": [

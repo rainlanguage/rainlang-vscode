@@ -32,7 +32,7 @@ suite("Rainlang Code Completion", () => {
     );
 
     test("Should provide filtered completion items based on provided position", async () => {
-        await testCompletion(docUri, new vscode.Position(0, 6), {
+        await testCompletion(docUri, new vscode.Position(1, 6), {
             items: [
                 { label: "add", kind: vscode.CompletionItemKind.Function },
                 { label: "sat-add", kind: vscode.CompletionItemKind.Function },
