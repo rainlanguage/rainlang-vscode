@@ -24,7 +24,7 @@ const myExp = rainlang`_: add(1 2);`
 By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified meta of a meta hash, however, you can add more subgraph endpoint URLs by adding the following to the `user` or `workspace` vscode json settings i.e. `settings.json`:<br>
 ```json
 {
-  "rainlang.subgraphs": [
+  "rainlang.subgraphs": [ 
     "https://api.thegraph.com/subgraphs/name/example1/example1",
     "https://api.thegraph.com/subgraphs/name/example2/example2"
   ]
