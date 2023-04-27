@@ -129,7 +129,7 @@ documents.onDidChangeContent(change => {
 
 connection.onCompletion(params => {
     const textDoc = documents.get(params.textDocument.uri);
-    if (textDoc) return langServices.doComplete(
+    if (textDoc && textDoc.languageId === "rainlang") return langServices.doComplete(
         textDoc, 
         params.position
     );
@@ -140,7 +140,7 @@ connection.onCompletionResolve(item => item);
 
 connection.onHover(params => {
     const textDoc = documents.get(params.textDocument.uri);
-    if (textDoc) return langServices.doHover(
+    if (textDoc && textDoc.languageId === "rainlang") return langServices.doHover(
         textDoc, 
         params.position
     );
@@ -163,10 +163,9 @@ async function getSetting() {
 
 // validate a document
 async function doValidate(textDocument: TextDocument): Promise<void> {
-    const diagnostics: Diagnostic[] = await langServices.doValidation(
-        textDocument
-    );
-
     // Send the computed diagnostics to VSCode.
-    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+    connection.sendDiagnostics({ 
+        uri: textDocument.uri, 
+        diagnostics: await langServices.doValidation(textDocument)
+    });
 }
