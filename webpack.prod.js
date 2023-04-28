@@ -13,7 +13,7 @@ const TerserPlugin = require("terser-webpack-plugin");
 const clientConfig = {
     context: path.join(__dirname, "client"),
     mode: "none",
-    target: "webworker", // web extensions run in a webworker context
+    target: "webworker",
     entry: {
         browserClientMain: "./src/browserClient.ts",
     },
@@ -24,7 +24,7 @@ const clientConfig = {
     },
     resolve: {
         mainFields: ["browser", "module", "main"],
-        extensions: [".ts", ".js"], // support ts-files and js-files
+        extensions: [".ts", ".js"],
         alias: {},
         fallback: {
             path: require.resolve("path-browserify")
@@ -61,7 +61,7 @@ const clientConfig = {
 const serverConfig = {
     context: path.join(__dirname, "server"),
     mode: "none",
-    target: "webworker", // web extensions run in a webworker context
+    target: "webworker",
     entry: {
         browserServerMain: "./src/browserServer.ts",
     },
@@ -73,7 +73,7 @@ const serverConfig = {
     },
     resolve: {
         mainFields: ["browser", "module", "main"],
-        extensions: [".ts", ".js"], // support ts-files and js-files
+        extensions: [".ts", ".js"],
         alias: {},
         fallback: {},
     },

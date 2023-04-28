@@ -1,13 +1,12 @@
-import { TextDocument } from "vscode-languageserver-textdocument";
 import { 
     MetaStore,
     RainDocument, 
+    TextDocument, 
     ClientCapabilities, 
     RainLanguageServices,
     getRainLanguageServices
 } from "@rainprotocol/rainlang";
 import {
-    Diagnostic,
     TextDocuments,
     createConnection,
     ProposedFeatures,
