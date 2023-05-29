@@ -4,7 +4,11 @@ import {
     TextDocument, 
     ClientCapabilities, 
     RainLanguageServices,
-    getRainLanguageServices
+    getRainLanguageServices,
+    InlayHint,
+    Diagnostic,
+    Range,
+    DiagnosticSeverity
 } from "@rainprotocol/rainlang";
 import {
     TextDocuments,
@@ -12,7 +16,9 @@ import {
     ProposedFeatures,
     InitializeResult,
     TextDocumentSyncKind,
-    DidChangeConfigurationNotification 
+    DidChangeConfigurationNotification, 
+    ImplementationParams,
+    InlayHintParams
 } from "vscode-languageserver/node";
 
 
@@ -57,7 +63,8 @@ connection.onInitialize(async(params) => {
             hoverProvider: true,
             executeCommandProvider: {
                 commands: ["_compile"]
-            }
+            },
+            // inlayHintProvider: true
         }
     };
     if (hasWorkspaceFolderCapability) {
@@ -108,6 +115,27 @@ connection.onDidChangeConfiguration(async() => {
         if (v.languageId === "rainlang") doValidate(v);
     });
 });
+
+// connection.languages.inlayHint.on((e: InlayHintParams) => {
+//     if (!e.textDocument.uri.endsWith("rain")) return null;
+//     return [{
+//         position: {line: 0, character: 0},
+//         label: [
+//             {
+//                 value: "hello",
+//                 command: {
+//                     title: "compile",
+//                     command: "rainlang.compile"
+//                 }
+//             }
+//         ],
+//         // tooltip: "jjjj",
+//         kind: 1,
+//         paddingLeft: true,
+//         paddingRight: true,
+//         data: 1234
+//     }] as InlayHint[];
+// });
 
 documents.onDidOpen(v => {
     if (v.document.languageId === "rainlang") doValidate(v.document);
@@ -162,9 +190,15 @@ async function getSetting() {
 
 // validate a document
 async function doValidate(textDocument: TextDocument): Promise<void> {
+    const diag = await langServices.doValidation(textDocument);
+    diag.push(Diagnostic.create(
+        Range.create({line:0, character:0}, {line:1, character:0}),
+        "hryyy",
+        DiagnosticSeverity.Error
+    ));
     // Send the computed diagnostics to VSCode.
     connection.sendDiagnostics({ 
         uri: textDocument.uri, 
-        diagnostics: await langServices.doValidation(textDocument)
+        diagnostics: diag
     });
 }

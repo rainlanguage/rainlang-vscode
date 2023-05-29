@@ -1,6 +1,6 @@
 // set additional subgraphs for extention development host workspace
-// {
-// 	"rainlang.subgraphs": [
-//     "https://api.thegraph.com/subgraphs/name/example/example"
-//   ]
-// }
+{
+	// "rainlang.subgraphs": [
+  //   "https://api.thegraph.com/subgraphs/name/example/example"
+  // ]
+}

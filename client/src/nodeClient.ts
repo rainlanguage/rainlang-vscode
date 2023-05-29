@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import * as path from "path";
 import { format } from "prettier";
 import * as vscode from "vscode";
 import {
+    Disposable,
     LanguageClient,
     LanguageClientOptions,
     ServerOptions,
@@ -22,6 +24,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	
     // channel for rainlang compiler
     let rainlangCompilerChannel: vscode.OutputChannel;
+
+    vscode.window.showInputBox({title: "interpreter address", placeHolder: "0x1234..."});
 
     // handler for rainlang compiler, send the request to server and logs the result in output channel
     const rainlangCompileHandler = async() => {
@@ -45,6 +49,36 @@ export async function activate(context: vscode.ExtensionContext) {
         else rainlangCompilerChannel.appendLine("undefined");
     };
 
+    // const myProvider1 = new class implements vscode.TextDocumentContentProvider {
+
+    // 	// emitter and its event
+    // 	onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+    //     // this.onDidChangeEmitter.
+    // 	onDidChange = this.onDidChangeEmitter.event;
+
+    // 	provideTextDocumentContent(uri: vscode.Uri): string {
+    // 		// simply invoke cowsay, use uri-path as text
+    // 		return "!"
+    // 	}
+    // };
+
+    const myProvider = new class implements vscode.InlayHintsProvider {
+        
+        onDidChangeInlayHints(listener: () => void) {
+            listener();
+            return new vscode.Disposable(() => {});
+        }
+        provideInlayHints(document: vscode.TextDocument, range: vscode.Range) {
+            return [];
+        }
+
+    };
+
+    context.subscriptions.push(
+        vscode.languages.registerInlayHintsProvider({language: "rainlang" }, myProvider)
+    );
+
+    myProvider.onDidChangeInlayHints(() => console.log("abcd"));
     // register the command
     context.subscriptions.push(
         vscode.commands.registerCommand("rainlang.compile", rainlangCompileHandler)
