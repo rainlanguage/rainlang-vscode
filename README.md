@@ -14,7 +14,7 @@ It also includes an End-to-End test.
 Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
 ```typescript
 // rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
-const myExp = rainlang`_: add(1 2);`
+const myExp = rainlang`_: add(1 2)`
 ```
 
 ## Tutorial

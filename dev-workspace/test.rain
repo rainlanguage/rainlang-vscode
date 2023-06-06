@@ -3,6 +3,10 @@
 /**
  * This is test
  */
+
+#abcd
+1
+
 #exp
 _: add(1 2 sub(1 2)),
-_: mul(3 4 calling-context<1>())
+_: mul(3 4 calling-context<'abcd>())
