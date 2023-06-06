@@ -29,14 +29,14 @@ suite("Rainlang Diagnostics", async() => {
         await testDiagnostics(docUri, [
             { 
                 message: "Out Of Range Inputs", 
-                range: toRange(1, 6, 1, 9), 
+                range: toRange(2, 6, 2, 9), 
                 code: 1281,
                 severity: vscode.DiagnosticSeverity.Error, 
                 source: "rainlang"
             },
             { 
                 message: "Mismatch LHS", 
-                range: toRange(1, 10, 1, 12), 
+                range: toRange(2, 10, 2, 12), 
                 severity: vscode.DiagnosticSeverity.Error, 
                 code: 1026,
                 source: "rainlang"
