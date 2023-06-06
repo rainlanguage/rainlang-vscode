@@ -25,10 +25,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // handler for rainlang compiler, send the request to server and logs the result in output channel
     const rainlangCompileHandler = async() => {
+        const expKeys = Array.from((await vscode.window.showInputBox({
+            title: "Expression Names",
+            placeHolder: "exp-1 exp-2 ...",
+            prompt: "specify the expression names in order by a whitespace seperating them"
+        })).matchAll(/[^\s]+/g)).map(v => v[0]);
         const result = await vscode.commands.executeCommand(
             "_compile",
             vscode.window.activeTextEditor.document.languageId,
             vscode.window.activeTextEditor.document.uri.toString(),
+            expKeys,
             {
                 start: vscode.window.activeTextEditor.selection.start,
                 end: vscode.window.activeTextEditor.selection.end,

@@ -4,7 +4,8 @@ import {
     TextDocument, 
     ClientCapabilities, 
     RainLanguageServices,
-    getRainLanguageServices
+    getRainLanguageServices,
+    rainlangc
 } from "@rainprotocol/rainlang";
 import {
     TextDocuments,
@@ -84,12 +85,16 @@ connection.onExecuteCommand(async(e) => {
     if (e.command === "_compile") {
         const langId = e.arguments![0];
         const uri = e.arguments![1];
-        // const range = e.arguments![2];
+        const expKeys = e.arguments![2];
         if (langId === "rainlang") {
             const _doc = documents.get(uri);
             if (_doc) {
-                const _rainDoc = await RainDocument.create(_doc, metaStore);
-                return _rainDoc.getExpressionConfig();
+                try {
+                    return await rainlangc(_doc, expKeys, metaStore);
+                }
+                catch (err) {
+                    return err;
+                }
             }
             else return null;
         }

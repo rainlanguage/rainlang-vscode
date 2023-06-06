@@ -6,7 +6,13 @@
       "include": "#comment"
     },
     {
-      "include": "#hash"
+      "include": "#import"
+    },
+    {
+      "include": "#binding"
+    },
+    {
+      "include": "#quote"
     },
     {
       "include": "#operator"
@@ -48,16 +54,31 @@
       "match": "(\\:)",
       "name": "keyword.operator.assignment.rainlang"
     },
-    "hash": {
+    "import": {
       "match": "(?<=\\s|^)(@)(0x[a-fA-F0-9]+)(?=\\s|$)",
       "captures": {
         "1": {
-          "name": "storage.meta-hash.rainlang"
+          "name": "entity.name.type.import.rainlang"
         },
         "2": {
-          "name": "variable.other.constant.meta-hash.rainlang"
+          "name": "support.class.import.rainlang"
         }
       }
+    },
+    "binding": {
+      "match": "(?<=\\s|^)(#)([^#\\s]+)(?=\\s|$)",
+      "captures": {
+        "1": {
+          "name": "storage.binding.rainlang"
+        },
+        "2": {
+          "name": "variable.other.constant.binding.rainlang"
+        }
+      }
+    },
+    "quote": {
+      "match": "'[^\\s()<>:,]*",
+      "name": "string.quoted.double.ts.rainlang" 
     },
     "number": {
       "patterns": [
