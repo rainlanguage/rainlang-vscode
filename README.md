@@ -21,8 +21,9 @@ const myExp = rainlang`_: add(1 2)`
 
 ### Configurations
 Extension configuration are as follows applied to `user` or `workspace` vscode json settings i.e. `settings.json`:
-- By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs and/or local meta hash/meta bytes as key/value pairs
-- Providing a map of dotrain files paths and expression anmes to be compiled at SAVE action to json files, paths MUST be relative to working workspace ROOT directory starting with './' in UNIX format i.e. '/' as path seperator
+- `subgraphs`: By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs
+- `localMetas`: It is possible to set local metas by adding key/value apir of meta hash and meta content bytes as hex string
+- `autoCompile`: Providing a map of dotrain files paths and expression anmes to be compiled at SAVE action to json files, paths MUST be relative to working workspace ROOT directory starting with './' in UNIX format i.e. '/' as path seperator
 <br>
 
 example:
@@ -39,8 +40,8 @@ example:
   "rainlang.autoCompile": {
     "onSave": [
       {
-        "dotrain": "./foo/bar.rain",
-        "json": "./baz.json",
+        "dotrain": "./foo.rain",
+        "json": "./bar/baz.json",
         "expressions": [
           "exp-1",
           "exp-2"

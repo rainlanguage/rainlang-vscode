@@ -148,8 +148,8 @@
               "description": "A map of dotrain files paths to specific json files paths in order to auto compile them on SAVE, paths MUST be relative to working workspace root directory starting with './' in UNIX format i.e. '/' as path seperator.",
               "minItems": 1,
               "examples": [[{
-                "dotrain": "./foo/bar.rain",
-                "json": "./baz.json",
+                "dotrain": "./foo.rain",
+                "json": "./bar/baz.json",
                 "expressions": [
                   "exp-1",
                   "exp-2"
