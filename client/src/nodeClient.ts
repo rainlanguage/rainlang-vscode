@@ -1,17 +1,13 @@
 import * as path from "path";
-import { format } from "prettier";
 import * as vscode from "vscode";
-import {
-    LanguageClient,
-    LanguageClientOptions,
-    ServerOptions,
-    TransportKind
-} from "vscode-languageclient/node";
+import { format } from "prettier";
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
 
 
 let client: LanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
+
     // The server is implemented in node
     const serverModule = context.asAbsolutePath(
         path.join("dist", "node", "server.js")
@@ -56,6 +52,52 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("rainlang.compile", rainlangCompileHandler)
     );
 
+    // auto compile on save implementation
+    vscode.workspace.onDidSaveTextDocument(async e => {
+        const autoCompileSetting = vscode.workspace.getConfiguration("rainlang.autoCompile");
+        if (Array.isArray(autoCompileSetting.onSave) && autoCompileSetting.onSave.length) {
+            const workspaceRootUri = getCurrentWorkspaceDir();
+            if (workspaceRootUri) {
+                const filesToCompile: {
+                    dotrain: vscode.Uri,
+                    json: vscode.Uri,
+                    expressions: string[]
+                }[] = autoCompileSetting?.onSave?.map((v: any) => {
+                    try {
+                        const dotrain = vscode.Uri.joinPath(workspaceRootUri, v.dotrain);
+                        const json = vscode.Uri.joinPath(workspaceRootUri, v.json);
+                        if (dotrain && json) return { dotrain, json, expressions: v.expressions };
+                        else return undefined;
+                    }
+                    catch { return undefined; }
+                })?.filter(v => v !== undefined && v.dotrain.toString() === e.uri.toString()) ?? [];
+
+                if (filesToCompile.length) {
+                    const workspaceEdit = new vscode.WorkspaceEdit();
+                    for (let i = 0; i < filesToCompile.length; i++) {
+                        const result = await vscode.commands.executeCommand(
+                            "_compile",
+                            e.languageId,
+                            e.uri.toString(),
+                            filesToCompile[i].expressions
+                        );
+                        const contents: Uint8Array = Buffer.from(
+                            format(
+                                JSON.stringify(result, null, 4),
+                                { parser: "json" }
+                            )
+                        );
+                        workspaceEdit.createFile(
+                            filesToCompile[i].json,
+                            { overwrite: true, contents }
+                        );
+                    }
+                    vscode.workspace.applyEdit(workspaceEdit);
+                }
+            }
+        }
+    });
+
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
     const serverOptions: ServerOptions = {
@@ -80,7 +122,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 vscode.workspace.createFileSystemWatcher("**/.clientrc")
             ]
         },
-        initializationOptions: { opmeta: initSettings.opmeta }
+        initializationOptions: initSettings
     };
 
     // const myProvider = new (class implements vscode.InlayHintsProvider {
@@ -116,4 +158,9 @@ export async function activate(context: vscode.ExtensionContext) {
 export function deactivate(): Thenable<void> | undefined {
     if (!client) return undefined;
     return client.stop();
+}
+
+function getCurrentWorkspaceDir(): vscode.Uri | undefined {
+    const currentWorkspaceEditor = vscode.window.activeTextEditor?.document.uri;
+    return vscode.workspace.getWorkspaceFolder(currentWorkspaceEditor)?.uri;
 }

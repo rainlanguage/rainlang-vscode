@@ -1,6 +1,5 @@
 import { 
     MetaStore,
-    RainDocument, 
     TextDocument, 
     ClientCapabilities, 
     RainLanguageServices,
@@ -35,9 +34,16 @@ connection.onInitialize(async(params) => {
     );
 
     // add subgraphs to metaStore
-    if (params.initializationOptions?.subgraphs) {
-        for (const sg of params.initializationOptions.subgraphs) {
-            metaStore.addSubgraph(sg);
+    if (params.initializationOptions) {
+        if (params.initializationOptions.localMetas) {
+            for (const hash of Object.keys(params.initializationOptions.localMetas)) {
+                metaStore.updateStore(hash, params.initializationOptions.localMetas[hash]);
+            }
+        }
+        if (params.initializationOptions.subgraphs) {
+            for (const sg of params.initializationOptions.subgraphs) {
+                metaStore.addSubgraph(sg);
+            }
         }
     }
 

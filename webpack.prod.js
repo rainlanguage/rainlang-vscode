@@ -30,6 +30,12 @@ const clientConfig = {
             path: require.resolve("path-browserify")
         },
     },
+    plugins: [
+        new webpack.ProvidePlugin({
+            process: "process/browser.js",
+            Buffer: ["buffer", "Buffer"],
+        })
+    ],
     module: {
         rules: [
             {

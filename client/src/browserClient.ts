@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { format } from "prettier/standalone";
-import babelParser from "prettier/parser-babel";
 import { LanguageClient, LanguageClientOptions } from "vscode-languageclient/browser";
 
 
@@ -8,7 +7,7 @@ let client: LanguageClient;
 
 // this method is called when vs code is activated
 export async function activate(context: vscode.ExtensionContext) {
-
+    
     // get the initial settings and pass them as initialzeOptions to server
     const initSettings = vscode.workspace.getConfiguration("rainlang");
 
@@ -20,7 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
             { language: "typescript" }
         ],
         synchronize: {},
-        initializationOptions: { opmeta: JSON.stringify(initSettings.opmeta) }
+        initializationOptions: JSON.stringify(initSettings)
     };
 
     // channel for rainlang compiler
@@ -60,6 +59,52 @@ export async function activate(context: vscode.ExtensionContext) {
         rainlangCompileHandler
     ));
 
+    // auto compile on save implementation
+    vscode.workspace.onDidSaveTextDocument(async e => {
+        const autoCompileSetting = vscode.workspace.getConfiguration("rainlang.autoCompile");
+        if (Array.isArray(autoCompileSetting.onSave) && autoCompileSetting.onSave.length) {
+            const workspaceRootUri = getCurrentWorkspaceDir();
+            if (workspaceRootUri) {
+                const filesToCompile: {
+                    dotrain: vscode.Uri,
+                    json: vscode.Uri,
+                    expressions: string[]
+                }[] = autoCompileSetting?.onSave?.map((v: any) => {
+                    try {
+                        const dotrain = vscode.Uri.joinPath(workspaceRootUri, v.dotrain);
+                        const json = vscode.Uri.joinPath(workspaceRootUri, v.json);
+                        if (dotrain && json) return { dotrain, json, expressions: v.expressions };
+                        else return undefined;
+                    }
+                    catch { return undefined; }
+                })?.filter(v => v !== undefined && v.dotrain.toString() === e.uri.toString()) ?? [];
+
+                if (filesToCompile.length) {
+                    const workspaceEdit = new vscode.WorkspaceEdit();
+                    for (let i = 0; i < filesToCompile.length; i++) {
+                        const result = await vscode.commands.executeCommand(
+                            "_compile",
+                            e.languageId,
+                            e.uri.toString(),
+                            JSON.stringify(filesToCompile[i].expressions)
+                        );
+                        const contents: Uint8Array = Buffer.from(
+                            format(
+                                JSON.stringify(result, null, 4),
+                                { parser: "json" }
+                            )
+                        );
+                        workspaceEdit.createFile(
+                            filesToCompile[i].json,
+                            { overwrite: true, contents }
+                        );
+                    }
+                    vscode.workspace.applyEdit(workspaceEdit);
+                }
+            }
+        }
+    });
+
     // Create a worker. The worker main file implements the language server.
     const serverMain = vscode.Uri.joinPath(context.extensionUri, "dist/browser/server.js");
     const worker = new Worker(serverMain.toString(true));
@@ -78,4 +123,9 @@ export async function activate(context: vscode.ExtensionContext) {
 export function deactivate(): Thenable<void> | undefined {
     if (!client) return undefined;
     return client.stop();
+}
+
+function getCurrentWorkspaceDir(): vscode.Uri | undefined {
+    const currentWorkspaceEditor = vscode.window.activeTextEditor?.document.uri;
+    return vscode.workspace.getWorkspaceFolder(currentWorkspaceEditor)?.uri;
 }

@@ -19,15 +19,35 @@ const myExp = rainlang`_: add(1 2)`
 
 ## Tutorial
 
-### Configure Additional Subgraphs For Metas
+### Configurations
+Extension configuration are as follows applied to `user` or `workspace` vscode json settings i.e. `settings.json`:
+- By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs and/or local meta hash/meta bytes as key/value pairs
+- Providing a map of dotrain files paths and expression anmes to be compiled at SAVE action to json files, paths MUST be relative to working workspace ROOT directory starting with './' in UNIX format i.e. '/' as path seperator
+<br>
 
-By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified meta of a meta hash, however, you can add more subgraph endpoint URLs by adding the following to the `user` or `workspace` vscode json settings i.e. `settings.json`:<br>
+example:
 ```json
 {
   "rainlang.subgraphs": [ 
     "https://api.thegraph.com/subgraphs/name/example1/example1",
     "https://api.thegraph.com/subgraphs/name/example2/example2"
-  ]
+  ],
+  "rainlang.localMetas": {
+    "0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f": "0x123456...",
+    "0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c": "0xabcdef..."
+  },
+  "rainlang.autoCompile": {
+    "onSave": [
+      {
+        "dotrain": "./foo/bar.rain",
+        "json": "./baz.json",
+        "expressions": [
+          "exp-1",
+          "exp-2"
+        ]
+      }
+    ]
+  }
 }
 ```
 Specified subgraph URLs must be under `https://api.thegraph.com/subgraphs/name/` domain.
