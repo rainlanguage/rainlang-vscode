@@ -23,7 +23,28 @@ const myExp = rainlang`_: add(1 2)`
 Extension configuration are as follows applied to `user` (except auto compile) or `workspace` vscode json settings i.e. `settings.json`:
 - `subgraphs`: By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs
 - `localMetas`: It is possible to set local metas by adding key/value pairs of meta hash and meta content bytes as hex string
-- `autoCompile`: Providing a path to a json containg mappings (array) of dotrain files paths and expression names and output json files paths to be compiled and written to their corresponding json files when an action (e.g. save) is triggered, paths MUST be relative to working workspace ROOT directory starting with `./` in UNIX format i.e. `/` as path seperator and this feature should ONLY be used on `workspace` settings.json and not on `user`.
+- `autoCompile`: Providing a path to a json containg mappings (array) of objects containing dotrain files paths and expression names and output json files paths to be compiled and written to their corresponding json files when an action (e.g. save) is triggered, an example of a mapping json content:
+```json
+[
+  {
+    "dotrain": "./path/to/dotrain1.rain",
+    "json": "./path/to/compiled1.json",
+    "expressions": [
+      "exp-1", 
+      "exp-2"
+    ]
+  },
+  {
+    "dotrain": "./path/to/dotrain12.rain",
+    "json": "./path/to/compiled2.json",
+    "expressions": [
+      "main"
+    ]
+  }
+]
+```
+Paths MUST be relative to working workspace ROOT directory starting with `./` in UNIX format (i.e. `/` as path seperator)
+Please note that this feature (`autoCompile`) should ONLY be used per workspace i.e. `workspace` settings.json and not globaly on `user` settings.json.
 <br>
 
 example:
@@ -38,7 +59,7 @@ example:
     "0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c": "0xabcdef..."
   },
   "rainlang.autoCompile": {
-    "onSave": "./bar/baz.json"
+    "onSave": "./path/to/mappings.json"
   }
 }
 ```
