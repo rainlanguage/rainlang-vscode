@@ -56,44 +56,94 @@ export async function activate(context: vscode.ExtensionContext) {
     // auto compile on save implementation
     vscode.workspace.onDidSaveTextDocument(async e => {
         const autoCompile = vscode.workspace.getConfiguration("rainlang.autoCompile");
-        if (Array.isArray(autoCompile.onSave) && autoCompile.onSave.length) {
+        if (typeof autoCompile.onSave === "string" && autoCompile.onSave) {
             const workspaceRootUri = getCurrentWorkspaceDir();
             if (workspaceRootUri) {
-                const filesToCompile: {
-                    dotrain: vscode.Uri,
-                    json: vscode.Uri,
-                    expressions: string[]
-                }[] = autoCompile?.onSave?.map((v: any) => {
-                    try {
-                        const dotrain = vscode.Uri.joinPath(workspaceRootUri, v.dotrain);
-                        const json = vscode.Uri.joinPath(workspaceRootUri, v.json);
-                        if (dotrain && json) return { dotrain, json, expressions: v.expressions };
-                        else return undefined;
-                    }
-                    catch { return undefined; }
-                })?.filter(v => v !== undefined && v.dotrain.toString() === e.uri.toString()) ?? [];
+                const mappingFileUri = vscode.Uri.joinPath(workspaceRootUri, autoCompile.onSave);
+                try {
+                    const content = JSON.parse(
+                        (await vscode.workspace.fs.readFile(mappingFileUri)).toString()
+                    );
+                    if (Array.isArray(content) && content.length) {
+                        const EXP_PATTERN = /^[a-z][0-9a-z-]*$/;
+                        const JSON_PATH_PATTERN = /^(\.\/)(\.\/|\.\.\/|[^]*\/)*[^]+\.json$/;
+                        const DOTRAIN_PATH_PATTERN = /^(\.\/)(\.\/|\.\.\/|[^]*\/)*[^]+\.rain$/;
+                        const filesToCompile: {
+                            dotrain: vscode.Uri,
+                            json: vscode.Uri,
+                            expressions: string[]
+                        }[] = content?.map((v: any) => {
+                            if (
+                                typeof v.dotrain === "string"
+                                && v.dotrain
+                                && DOTRAIN_PATH_PATTERN.test(v.dotrain)
+                                && typeof v.json === "string"
+                                && v.json
+                                && JSON_PATH_PATTERN.test(v.json)
+                                && Array.isArray(v.expressions)
+                                && v.expressions.length
+                                && v.expressions.every((name: any) => 
+                                    typeof name === "string"
+                                    && name
+                                    && EXP_PATTERN.test(name)
+                                )
+                            ) {
+                                try {
+                                    const dotrain = vscode.Uri.joinPath(
+                                        workspaceRootUri,
+                                        v.dotrain
+                                    );
+                                    const json = vscode.Uri.joinPath(
+                                        workspaceRootUri,
+                                        v.json
+                                    );
 
-                if (filesToCompile.length) {
-                    const workspaceEdit = new vscode.WorkspaceEdit();
-                    for (let i = 0; i < filesToCompile.length; i++) {
-                        const result = await vscode.commands.executeCommand(
-                            "_compile",
-                            e.languageId,
-                            e.uri.toString(),
-                            filesToCompile[i].expressions
-                        );
-                        const contents: Uint8Array = Buffer.from(
-                            format(
-                                result ? JSON.stringify(result, null, 2) : "failed to compile!",
-                                { parser: "json" }
-                            )
-                        );
-                        workspaceEdit.createFile(
-                            filesToCompile[i].json,
-                            { overwrite: true, contents }
-                        );
+                                    if (dotrain && json) {
+                                        return { 
+                                            dotrain, 
+                                            json, 
+                                            expressions: v.expressions 
+                                        };
+                                    }
+                                    else return undefined;
+                                }
+                                catch { return undefined; }
+                            }
+                            else return undefined;
+                        })?.filter(v => 
+                            v !== undefined && v.dotrain.toString() === e.uri.toString()
+                        ) ?? [];
+        
+                        if (filesToCompile.length) {
+                            const workspaceEdit = new vscode.WorkspaceEdit();
+                            for (let i = 0; i < filesToCompile.length; i++) {
+                                const result = await vscode.commands.executeCommand(
+                                    "_compile",
+                                    e.languageId,
+                                    e.uri.toString(),
+                                    filesToCompile[i].expressions
+                                );
+                                const contents: Uint8Array = Buffer.from(
+                                    format(
+                                        result 
+                                            ? JSON.stringify(result, null, 2) 
+                                            : "failed to compile!",
+                                        { parser: "json" }
+                                    )
+                                );
+                                workspaceEdit.createFile(
+                                    filesToCompile[i].json,
+                                    { overwrite: true, contents }
+                                );
+                            }
+                            vscode.workspace.applyEdit(workspaceEdit);
+                        }
                     }
-                    vscode.workspace.applyEdit(workspaceEdit);
+                }
+                catch (error) {
+                    vscode.window.showErrorMessage(
+                        "Failed to find mapping file or parse its contents"
+                    );
                 }
             }
         }

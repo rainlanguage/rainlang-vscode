@@ -142,59 +142,19 @@
         "rainlang.autoCompile": {
           "scope": "window",
           "type": "object",
-          "description": "Dotrain auto compile maps for file actions, such as save, open, close",
+          "description": "Paths of json mapping files used for auto compiling Dotrain files when an action is triggered, such as save, open, close, This feature is ONLY meant to be used for `workspace` settings.json and with `user`.",
           "additionalProperties": false,
           "minProperties": 1,
-          "maxProperties": 3,
           "examples": [
             {
-              "onSave": [
-                {
-                  "dotrain": "./foo.rain",
-                  "json": "./bar/baz.json",
-                  "expressions": [
-                    "exp-1",
-                    "exp-2"
-                  ]
-                }
-              ]
+              "onSave": "./bar/baz.json"
             }
           ],
           "properties": {
             "onSave": {
-              "type": "array",
-              "description": "A map of dotrain files paths to specific json files paths in order to auto compile them on SAVE, paths MUST be relative to working workspace root directory starting with './' in UNIX format i.e. '/' as path seperator.",
-              "minItems": 1,
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "json",
-                  "expressions",
-                  "dotrain"
-                ],
-                "properties": {
-                  "dotrain": {
-                    "type": "string",
-                    "description": "The dotrain file path.",
-                    "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.rain$"
-                  },
-                  "json": {
-                    "type": "string",
-                    "description": "The json file path.",
-                    "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.json$"
-                  },
-                  "expressions": {
-                    "type": "array",
-                    "description": "Array of expression names to compile.",
-                    "minItems": 1,
-                    "items": {
-                      "type": "string",
-                      "pattern": "^[a-z][a-z0-9-]*$"
-                    }
-                  }
-                }
-              }
+              "type": "string",
+              "description": "Path to a json containing mapping data for Dotrain files paths, expression names and output json files paths to trigger auto compilation on SAVE, path MUST be RELATIVE to current workspace ROOT directory starting with `./` in UNIX format(`/` as path seperator), The mapping file must be a json with array of objects with following format: [{ \"dotrain\": \"./foo.rain\", \"json\": \"./bar/baz.json\", \"expressions\": [\"exp-1\", \"exp-2\"] }], for details about the mapping file content please read https://github.com/rainprotocol/rainlang",
+              "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.json$"
             }
           }
         },

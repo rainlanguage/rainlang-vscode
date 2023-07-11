@@ -11,7 +11,7 @@ It also includes an End-to-End test.
 
 ## Functionality
 
-Rain Language Server works for rain files with `.rain`, `.rainlang` or `.rl` extentions as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
+Rain Language Server works for rain files with `.rain` extentions as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
 ```typescript
 // rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
 const myExp = rainlang`_: add(1 2)`
@@ -20,10 +20,10 @@ const myExp = rainlang`_: add(1 2)`
 ## Tutorial
 
 ### Configurations
-Extension configuration are as follows applied to `user` or `workspace` vscode json settings i.e. `settings.json`:
+Extension configuration are as follows applied to `user` (except auto compile) or `workspace` vscode json settings i.e. `settings.json`:
 - `subgraphs`: By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs
 - `localMetas`: It is possible to set local metas by adding key/value pairs of meta hash and meta content bytes as hex string
-- `autoCompile`: Providing a map of dotrain files paths and expression names to be compiled at SAVE action and written to json files, paths MUST be relative to working workspace ROOT directory starting with './' in UNIX format i.e. '/' as path seperator
+- `autoCompile`: Providing a path to a json containg mappings (array) of dotrain files paths and expression names and output json files paths to be compiled and written to their corresponding json files when an action (e.g. save) is triggered, paths MUST be relative to working workspace ROOT directory starting with `./` in UNIX format i.e. `/` as path seperator and this feature should ONLY be used on `workspace` settings.json and not on `user`.
 <br>
 
 example:
@@ -38,16 +38,7 @@ example:
     "0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c": "0xabcdef..."
   },
   "rainlang.autoCompile": {
-    "onSave": [
-      {
-        "dotrain": "./foo.rain",
-        "json": "./bar/baz.json",
-        "expressions": [
-          "exp-1",
-          "exp-2"
-        ]
-      }
-    ]
+    "onSave": "./bar/baz.json"
   }
 }
 ```
