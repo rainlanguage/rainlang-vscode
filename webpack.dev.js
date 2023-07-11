@@ -7,7 +7,6 @@
 
 const path = require("path");
 const webpack = require("webpack");
-const TerserPlugin = require("terser-webpack-plugin");
 
 /** @type WebpackConfig */
 const clientConfig = {
@@ -108,4 +107,4 @@ const serverConfig = {
     devtool: "source-map",
 };
 
-module.exports = [clientConfig, serverConfig];
+module.exports = [ clientConfig, serverConfig ];
