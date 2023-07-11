@@ -43,11 +43,12 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         );
         if (!rainlangCompilerChannel) rainlangCompilerChannel = vscode.window.createOutputChannel(
-            "Rain Language Compiler", "json"
+            "Rain Language Compiler",
+            "json"
         );
         rainlangCompilerChannel.show(true);
         if (result) rainlangCompilerChannel.appendLine(format(
-            JSON.stringify(result, null, 4), 
+            JSON.stringify(result, null, 2), 
             { parser: "json" }
         ));
         else rainlangCompilerChannel.appendLine("undefined");
@@ -61,15 +62,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // auto compile on save implementation
     vscode.workspace.onDidSaveTextDocument(async e => {
-        const autoCompileSetting = vscode.workspace.getConfiguration("rainlang.autoCompile");
-        if (Array.isArray(autoCompileSetting.onSave) && autoCompileSetting.onSave.length) {
+        const autoCompile = vscode.workspace.getConfiguration("rainlang.autoCompile");
+        if (Array.isArray(autoCompile.onSave) && autoCompile.onSave.length) {
             const workspaceRootUri = getCurrentWorkspaceDir();
             if (workspaceRootUri) {
                 const filesToCompile: {
                     dotrain: vscode.Uri,
                     json: vscode.Uri,
                     expressions: string[]
-                }[] = autoCompileSetting?.onSave?.map((v: any) => {
+                }[] = autoCompile?.onSave?.map((v: any) => {
                     try {
                         const dotrain = vscode.Uri.joinPath(workspaceRootUri, v.dotrain);
                         const json = vscode.Uri.joinPath(workspaceRootUri, v.json);
@@ -90,7 +91,7 @@ export async function activate(context: vscode.ExtensionContext) {
                         );
                         const contents: Uint8Array = Buffer.from(
                             format(
-                                JSON.stringify(result, null, 4),
+                                result ? JSON.stringify(result, null, 2) : "failed to compile!",
                                 { parser: "json" }
                             )
                         );
@@ -127,5 +128,7 @@ export function deactivate(): Thenable<void> | undefined {
 
 function getCurrentWorkspaceDir(): vscode.Uri | undefined {
     const currentWorkspaceEditor = vscode.window.activeTextEditor?.document.uri;
-    return vscode.workspace.getWorkspaceFolder(currentWorkspaceEditor)?.uri;
+    return currentWorkspaceEditor 
+        ? vscode.workspace.getWorkspaceFolder(currentWorkspaceEditor)?.uri 
+        : undefined;
 }

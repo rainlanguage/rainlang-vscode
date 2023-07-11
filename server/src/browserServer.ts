@@ -90,7 +90,7 @@ connection.onInitialized(() => {
 });
 
 // executes rain compile command
-connection.onExecuteCommand(async(e: ExecuteCommandParams) => {
+connection.onExecuteCommand(async e => {
     if (e.command === "_compile") {
         const langId = e.arguments![0];
         const uri = e.arguments![1];
