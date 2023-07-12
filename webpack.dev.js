@@ -7,7 +7,6 @@
 
 const path = require("path");
 const webpack = require("webpack");
-const TerserPlugin = require("terser-webpack-plugin");
 
 /** @type WebpackConfig */
 const clientConfig = {
@@ -30,6 +29,12 @@ const clientConfig = {
             path: require.resolve("path-browserify")
         },
     },
+    plugins: [
+        new webpack.ProvidePlugin({
+            process: "process/browser.js",
+            Buffer: ["buffer", "Buffer"],
+        })
+    ],
     module: {
         rules: [
             {
@@ -70,7 +75,9 @@ const serverConfig = {
         mainFields: ["browser", "module", "main"],
         extensions: [".ts", ".js"],
         alias: {},
-        fallback: {},
+        fallback: {
+            process: require.resolve("process/browser")
+        },
     },
     plugins: [
         new webpack.ProvidePlugin({
@@ -100,4 +107,4 @@ const serverConfig = {
     devtool: "source-map",
 };
 
-module.exports = [clientConfig, serverConfig];
+module.exports = [ clientConfig, serverConfig ];

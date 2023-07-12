@@ -40,8 +40,12 @@ connection.onInitialize(async(params: InitializeParams) => {
     );
 
     // add subgraphs to metaStore
-    if (params.initializationOptions?.subgraphs) {
-        for (const sg of params.initializationOptions.subgraphs) {
+    if (params.initializationOptions) {
+        const settings = JSON.parse(params.initializationOptions);
+        if (settings.localMetas) for (const hash of Object.keys(settings.localMetas)) {
+            metaStore.updateStore(hash, settings.localMetas[hash]);
+        }
+        if (settings.subgraphs) for (const sg of settings.subgraphs) {
             metaStore.addSubgraph(sg);
         }
     }
@@ -86,7 +90,7 @@ connection.onInitialized(() => {
 });
 
 // executes rain compile command
-connection.onExecuteCommand(async(e: ExecuteCommandParams) => {
+connection.onExecuteCommand(async e => {
     if (e.command === "_compile") {
         const langId = e.arguments![0];
         const uri = e.arguments![1];

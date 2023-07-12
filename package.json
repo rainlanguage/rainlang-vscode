@@ -76,9 +76,7 @@
           "RainLang"
         ],
         "extensions": [
-          ".rain",
-          ".rainlang",
-          ".rl"
+          ".rain"
         ],
         "configuration": "./rain-language-configuration.json",
         "icon": {
@@ -121,6 +119,43 @@
             "type": "string",
             "pattern": "^https://api.thegraph.com/subgraphs/name/",
             "minItems": 1
+          }
+        },
+        "rainlang.localMetas": {
+          "scope": "resource",
+          "description": "key/value pairs of meta hash and meta bytes.",
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "patternProperties": {
+            "^0x[a-fA-F0-9]{64}$": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{2,}$"
+            }
+          },
+          "examples": [
+            {
+              "0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f": "0x1234567890..."
+            }
+          ]
+        },
+        "rainlang.autoCompile": {
+          "scope": "window",
+          "type": "object",
+          "description": "Paths of json mapping files used for auto compiling Dotrain files when an action is triggered, such as save, open, close, This feature is ONLY meant to be used for `workspace` settings.json and with `user`.",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "examples": [
+            {
+              "onSave": "./bar/baz.json"
+            }
+          ],
+          "properties": {
+            "onSave": {
+              "type": "string",
+              "description": "Path to a json containing mapping data for Dotrain files paths, expression names and output json files paths to trigger auto compilation on SAVE, path MUST be RELATIVE to current workspace ROOT directory starting with `./` in UNIX format(`/` as path seperator), The mapping file must be a json with array of objects with following format: [{ \"dotrain\": \"./foo.rain\", \"json\": \"./bar/baz.json\", \"expressions\": [\"exp-1\", \"exp-2\"] }], for details about the mapping file content please read https://github.com/rainprotocol/rainlang",
+              "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.json$"
+            }
           }
         },
         "rainlang.trace.server": {

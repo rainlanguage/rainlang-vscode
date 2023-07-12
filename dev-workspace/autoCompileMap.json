@@ -1,0 +1,9 @@
+[
+  {
+    "dotrain": "./test.rain",
+    "json": "./autoCompile/test.rain.json",
+    "expressions": [
+      "main"
+    ]
+  }
+]

@@ -15,7 +15,7 @@ async function testCompletion(
         position
     )) as vscode.CompletionList;
 
-    assert.ok(actualCompletionList.items.length == 3);
+    assert.ok(actualCompletionList.items.length == 5);
     expectedCompletionList.items.forEach((expectedItem, i) => {
         const actualItem = actualCompletionList.items[i];
         assert.equal((actualItem.label as vscode.CompletionItemLabel).label, expectedItem.label);
@@ -34,9 +34,11 @@ suite("Rainlang Code Completion", () => {
     test("Should provide filtered completion items based on provided position", async () => {
         await testCompletion(docUri, new vscode.Position(2, 6), {
             items: [
-                { label: "add", kind: vscode.CompletionItemKind.Function },
-                { label: "sat-add", kind: vscode.CompletionItemKind.Function },
-                { label: "saturating-add", kind: vscode.CompletionItemKind.Function }
+                { label: "add"              , kind: vscode.CompletionItemKind.Function },
+                { label: "decimal18-add"    , kind: vscode.CompletionItemKind.Function },
+                { label: "int-add"          , kind: vscode.CompletionItemKind.Function },
+                { label: "sat-add"          , kind: vscode.CompletionItemKind.Function },
+                { label: "saturating-add"   , kind: vscode.CompletionItemKind.Function }
             ]
         });
     });

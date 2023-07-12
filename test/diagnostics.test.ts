@@ -28,18 +28,18 @@ suite("Rainlang Diagnostics", async() => {
     test("Should detect diagnostics correctly", async () => {
         await testDiagnostics(docUri, [
             { 
-                message: "Out Of Range Inputs", 
-                range: toRange(2, 6, 2, 9), 
-                code: 1281,
+                message : "Out Of Range Inputs", 
+                range   : toRange(2, 6, 2, 9), 
+                code    : 1281,
                 severity: vscode.DiagnosticSeverity.Error, 
-                source: "rainlang"
+                source  : "rainlang"
             },
             { 
-                message: "Mismatch LHS", 
-                range: toRange(2, 10, 2, 12), 
+                message : "Mismatch LHS", 
+                range   : toRange(2, 10, 2, 12), 
                 severity: vscode.DiagnosticSeverity.Error, 
-                code: 1026,
-                source: "rainlang"
+                code    : 1026,
+                source  : "rainlang"
             }
         ]);
     });
