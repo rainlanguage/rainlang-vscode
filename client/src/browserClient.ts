@@ -66,8 +66,11 @@ export async function activate(context: vscode.ExtensionContext) {
         if (typeof autoCompile.onSave === "string" && autoCompile.onSave) {
             const workspaceRootUri = getCurrentWorkspaceDir();
             if (workspaceRootUri) {
-                const mappingFileUri = vscode.Uri.joinPath(workspaceRootUri, autoCompile.onSave);
                 try {
+                    const mappingFileUri = vscode.Uri.joinPath(
+                        workspaceRootUri, 
+                        autoCompile.onSave
+                    );
                     const content = JSON.parse(
                         (await vscode.workspace.fs.readFile(mappingFileUri)).toString()
                     );
@@ -82,16 +85,13 @@ export async function activate(context: vscode.ExtensionContext) {
                         }[] = content?.map((v: any) => {
                             if (
                                 typeof v.dotrain === "string"
-                                && v.dotrain
                                 && DOTRAIN_PATH_PATTERN.test(v.dotrain)
                                 && typeof v.json === "string"
-                                && v.json
                                 && JSON_PATH_PATTERN.test(v.json)
                                 && Array.isArray(v.expressions)
                                 && v.expressions.length
                                 && v.expressions.every((name: any) => 
                                     typeof name === "string"
-                                    && name
                                     && EXP_PATTERN.test(name)
                                 )
                             ) {
@@ -147,9 +147,9 @@ export async function activate(context: vscode.ExtensionContext) {
                         }
                     }
                 }
-                catch (error) {
+                catch {
                     vscode.window.showErrorMessage(
-                        "Failed to find mapping file or parse its contents"
+                        "Failed to find mapping file or it contains invalid content"
                     );
                 }
             }
