@@ -1,12 +1,17 @@
-@0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f
-@0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c
+@ opmeta 0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f
+@ contmeta 0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
+  'calling-context new-name 
+  base !
+
 /**
  * This is test
  */
-
 #row
 1
 
 #main
-_: add(1 2 sub(1 2)),
-_: mul(3 4 calling-context<'row>())
+_: add(1 2 opmeta.sub(1 2)),
+_: mul(3 4 contmeta.new-name<'fn>() infinity .row);
+
+#fn
+_: .opmeta.add(1 2);
