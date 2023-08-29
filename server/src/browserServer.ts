@@ -159,45 +159,44 @@ connection.onHover(params => {
     else return null;
 });
 
-connection.languages.semanticTokens.on( async(e: SemanticTokensParams) => {
+connection.languages.semanticTokens.on(async(e: SemanticTokensParams) => {
     let data: number[];
-    const textDoc = documents.get(e.textDocument.uri);
-    if (textDoc) {
-        const _d = new RainDocument(textDoc, metaStore);
+    const _textDoc = documents.get(e.textDocument.uri);
+    if (_textDoc) {
+        const _d = new RainDocument(_textDoc, metaStore);
         await _d.parse();
-        const _elisions = _d.bindings.filter(
+        let _lastLine = 0;
+        data = _d.bindings.filter(
             v => v.elided !== undefined
-        );
-        let lastLine: number;
-        data = _elisions.flatMap(v => {
-            const _start = textDoc.positionAt(v.contentPosition[0] + 1);
-            const _end = textDoc.positionAt(v.contentPosition[1] + 1);
+        ).flatMap(v => {
+            const _start = _textDoc.positionAt(v.contentPosition[0] + 1);
+            const _end = _textDoc.positionAt(v.contentPosition[1] + 1);
             if (_start.line === _end.line) return [Range.create(_start, _end)];
             else {
                 const _ranges = [];
                 for (let i = 0; i <= _end.line - _start.line; i++) {
                     console.log(i);
                     if (i === 0) _ranges.push(
-                        Range.create(_start, textDoc.positionAt(
-                            (textDoc.offsetAt({line: _start.line + 1, character: 0}) - 1)
+                        Range.create(_start, _textDoc.positionAt(
+                            (_textDoc.offsetAt({line: _start.line + 1, character: 0}) - 1)
                         ))
                     );
                     else if (i === _end.line - _start.line) _ranges.push(
                         Range.create({line: _end.line, character: 0}, _end)
                     );
                     else {
-                        if (_start.line + i >= textDoc.lineCount) {
-                            const _pos = textDoc.positionAt(textDoc.getText().length - 1);
+                        if (_start.line + i >= _textDoc.lineCount) {
+                            const _pos = _textDoc.positionAt(_textDoc.getText().length - 1);
                             _ranges.push(Range.create(
-                                textDoc.lineCount - 1, 
+                                _textDoc.lineCount - 1, 
                                 0, 
                                 _pos.line , 
                                 _pos.character
                             ));
                         }
                         else {
-                            const _pos = textDoc.positionAt(
-                                textDoc.offsetAt({line: _start.line + i + 1, character: 0}) - 1
+                            const _pos = _textDoc.positionAt(
+                                _textDoc.offsetAt({line: _start.line + i + 1, character: 0}) - 1
                             );
                             _ranges.push(Range.create(
                                 _start.line + i, 
@@ -212,13 +211,13 @@ connection.languages.semanticTokens.on( async(e: SemanticTokensParams) => {
             }
         }).flatMap(v => {
             const _result = [
-                lastLine === undefined ? v.start.line : v.start.line - lastLine,
+                v.start.line - _lastLine,
                 v.start.character,
                 v.end.character - v.start.character,
                 0,
                 1
             ];
-            lastLine = v.start.line;
+            _lastLine = v.start.line;
             return _result;
         });
     }

@@ -1,10 +1,12 @@
 # Rain Language Implementation for Visual Studio Code
 
 Rain language implementation for vscode. Uses Rain Language Services from [rainlang](https://github.com/rainprotocol/rainlang) repo under the hood.
-It has the following language features:
+This extension provides the following language features:
 - Completions
 - Diagnostics
 - Hovers
+- Syntax Highlighting
+- Semantic Syntax Highlighting
 
 It also includes an End-to-End test.
 <br>

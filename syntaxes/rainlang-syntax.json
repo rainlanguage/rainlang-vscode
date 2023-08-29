@@ -1,5 +1,5 @@
 {
-  "fileTypes": ["rain", "rainlang", "rl"],
+  "fileTypes": ["rain"],
   "name": "Rain Language",
   "patterns": [
     {
