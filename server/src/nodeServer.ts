@@ -1,10 +1,11 @@
 import { 
+    Range, 
+    dotrainc,
     MetaStore,
     TextDocument, 
-    ClientCapabilities, 
+    RainDocument,
     RainLanguageServices,
-    getRainLanguageServices,
-    rainlangc
+    getRainLanguageServices 
 } from "@rainprotocol/rainlang";
 import {
     TextDocuments,
@@ -12,6 +13,7 @@ import {
     ProposedFeatures,
     InitializeResult,
     TextDocumentSyncKind,
+    SemanticTokensParams,
     DidChangeConfigurationNotification 
 } from "vscode-languageserver/node";
 
@@ -26,11 +28,13 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 let langServices: RainLanguageServices;
 const metaStore = new MetaStore();
 let hasWorkspaceFolderCapability = false;
+let clientCapabilities;
 
 connection.onInitialize(async(params) => {
-    const capabilities = params.capabilities;
+    clientCapabilities = params.capabilities;
+    console.log((clientCapabilities.textDocument));
     hasWorkspaceFolderCapability = !!(
-        capabilities.workspace && !!capabilities.workspace.workspaceFolders
+        clientCapabilities.workspace && !!clientCapabilities.workspace.workspaceFolders
     );
 
     // add subgraphs to metaStore
@@ -40,15 +44,13 @@ connection.onInitialize(async(params) => {
                 metaStore.updateStore(hash, params.initializationOptions.localMetas[hash]);
             }
         }
-        if (params.initializationOptions.subgraphs) {
-            for (const sg of params.initializationOptions.subgraphs) {
-                metaStore.addSubgraph(sg);
-            }
-        }
+        if (params.initializationOptions.subgraphs) metaStore.addSubgraphs(
+            params.initializationOptions.subgraphs
+        );
     }
 
     langServices = getRainLanguageServices({
-        clientCapabilities: ClientCapabilities.ALL,
+        clientCapabilities,
         metaStore
     });
 
@@ -59,12 +61,21 @@ connection.onInitialize(async(params) => {
                 resolveProvider: true,
                 completionItem: {
                     labelDetailsSupport: true
-                }
+                },
+                triggerCharacters: ["."]
             },
             hoverProvider: true,
             executeCommandProvider: {
                 commands: ["_compile"]
-            }
+            },
+            semanticTokensProvider: {
+                legend: {
+                    tokenTypes: ["keyword", "class", "interface", "enum", "function", "variable"],
+                    tokenModifiers: ["declaration", "readonly"]
+                },
+                full: true
+            },
+            // inlayHintProvider: true,
         }
     };
     if (hasWorkspaceFolderCapability) {
@@ -96,7 +107,7 @@ connection.onExecuteCommand(async e => {
             const _doc = documents.get(uri);
             if (_doc) {
                 try {
-                    return await rainlangc(_doc, expKeys, metaStore);
+                    return await dotrainc(_doc, expKeys, metaStore);
                 }
                 catch (err) {
                     return err;
@@ -110,11 +121,7 @@ connection.onExecuteCommand(async e => {
 
 connection.onDidChangeConfiguration(async() => {
     const settings = await getSetting();
-    if (settings?.subgraphs) {
-        for (const sg of settings.subgraphs) {
-            metaStore.addSubgraph(sg);
-        }
-    }
+    if (settings?.subgraphs) metaStore.addSubgraphs(settings.subgraphs);
     documents.all().forEach(v => {
         if (v.languageId === "rainlang") doValidate(v);
     });
@@ -156,6 +163,127 @@ connection.onHover(params => {
     );
     else return null;
 });
+
+connection.languages.semanticTokens.on( async(e: SemanticTokensParams) => {
+    let data: number[];
+    const textDoc = documents.get(e.textDocument.uri);
+    if (textDoc) {
+        const _d = new RainDocument(textDoc, metaStore);
+        await _d.parse();
+        const _elisions = _d.bindings.filter(
+            v => v.elided !== undefined
+        );
+        let lastLine: number;
+        data = _elisions.flatMap(v => {
+            const _start = textDoc.positionAt(v.contentPosition[0] + 1);
+            const _end = textDoc.positionAt(v.contentPosition[1] + 1);
+            if (_start.line === _end.line) return [Range.create(_start, _end)];
+            else {
+                const _ranges = [];
+                for (let i = 0; i <= _end.line - _start.line; i++) {
+                    console.log(i);
+                    if (i === 0) _ranges.push(
+                        Range.create(_start, textDoc.positionAt(
+                            (textDoc.offsetAt({line: _start.line + 1, character: 0}) - 1)
+                        ))
+                    );
+                    else if (i === _end.line - _start.line) _ranges.push(
+                        Range.create({line: _end.line, character: 0}, _end)
+                    );
+                    else {
+                        if (_start.line + i >= textDoc.lineCount) {
+                            const _pos = textDoc.positionAt(textDoc.getText().length - 1);
+                            _ranges.push(Range.create(
+                                textDoc.lineCount - 1, 
+                                0, 
+                                _pos.line , 
+                                _pos.character
+                            ));
+                        }
+                        else {
+                            const _pos = textDoc.positionAt(
+                                textDoc.offsetAt({line: _start.line + i + 1, character: 0}) - 1
+                            );
+                            _ranges.push(Range.create(
+                                _start.line + i, 
+                                0, 
+                                _pos.line, 
+                                _pos.character
+                            ));
+                        }
+                    }
+                }
+                return _ranges;
+            }
+        }).flatMap(v => {
+            const _result = [
+                lastLine === undefined ? v.start.line : v.start.line - lastLine,
+                v.start.character,
+                v.end.character - v.start.character,
+                0,
+                1
+            ];
+            lastLine = v.start.line;
+            return _result;
+        });
+    }
+    else data = [];
+    return { data };
+});
+
+// connection.onRequest("getElissions", (async(e: string) => {
+//     const textDoc = documents.get(e);
+//     if (textDoc) {
+//         const _d = new RainDocument(textDoc, metaStore);
+//         await _d.parse();
+//         const _elisions = _d.bindings.filter(
+//             v => v.elided !== undefined
+//         );
+//         return _elisions.flatMap(v => {
+//             const _start = textDoc.positionAt(v.contentPosition[0] + 1);
+//             const _end = textDoc.positionAt(v.contentPosition[1] + 1);
+//             if (_start.line === _end.line) return [Range.create(_start, _end)];
+//             else {
+//                 const _ranges = [];
+//                 for (let i = 0; i <= _end.line - _start.line; i++) {
+//                     console.log(i);
+//                     if (i === 0) _ranges.push(
+//                         Range.create(_start, textDoc.positionAt(
+//                             (textDoc.offsetAt({line: _start.line + 1, character: 0}) - 1)
+//                         ))
+//                     );
+//                     else if (i === _end.line - _start.line) _ranges.push(
+//                         Range.create({line: _end.line, character: 0}, _end)
+//                     );
+//                     else {
+//                         if (_start.line + i >= textDoc.lineCount) {
+//                             const _pos = textDoc.positionAt(textDoc.getText().length - 1);
+//                             _ranges.push(Range.create(
+//                                 textDoc.lineCount - 1, 
+//                                 0, 
+//                                 _pos.line , 
+//                                 _pos.character
+//                             ));
+//                         }
+//                         else {
+//                             const _pos = textDoc.positionAt(
+//                                 textDoc.offsetAt({line: _start.line + i + 1, character: 0}) - 1
+//                             );
+//                             _ranges.push(Range.create(
+//                                 _start.line + i, 
+//                                 0, 
+//                                 _pos.line, 
+//                                 _pos.character
+//                             ));
+//                         }
+//                     }
+//                 }
+//                 return _ranges;
+//             }
+//         });
+//     }
+//     else return [];
+// }));
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events
