@@ -19,7 +19,8 @@ import { runTests } from "@vscode/test-electron";
         await runTests({ 
             extensionDevelopmentPath, 
             extensionTestsPath, 
-            launchArgs: [ workspacePath ] 
+            launchArgs: [ workspacePath ],
+            version: "stable"
         });
     } 
     catch (err) {

@@ -1,9 +1,12 @@
 {
-  "fileTypes": ["rain", "rainlang", "rl"],
+  "fileTypes": ["rain"],
   "name": "Rain Language",
   "patterns": [
     {
       "include": "#comment"
+    },
+    {
+      "include": "#reserved"
     },
     {
       "include": "#import"
@@ -54,19 +57,45 @@
       "match": "(\\:)",
       "name": "keyword.operator.assignment.rainlang"
     },
+    "reserved": {
+      "match": "infinity|max-uint-256|max-uint256",
+      "name": "keyword.reserved.rainlang"
+    },
     "import": {
-      "match": "(?<=\\s|^)(@)(0x[a-fA-F0-9]+)(?=\\s|$)",
-      "captures": {
-        "1": {
-          "name": "entity.name.type.import.rainlang"
+      "patterns": [
+        {
+          "match": "(@)\\s*([a-zA-Z0-9-_.]*\\s+)?(0x[a-fA-F0-9]+)",
+          "captures": {
+            "1": {
+              "name": "storage.import.rainlang"
+            },
+            "2": {
+              "name": "support.type.namespace.rainlang"
+            },
+            "3": {
+              "name": "keyword.operator.quantifier.regexp.hash.rainlang"
+            }
+          }
         },
-        "2": {
-          "name": "support.class.import.rainlang"
+        {
+          "begin": "@",
+          "beginCaptures": {
+            "0": {
+              "name": "storage.import.rainlang"
+            }
+          },
+          "end": "\\b0x[a-fA-F0-9]+",
+          "endCaptures": {
+            "0": {
+              "name": "keyword.operator.quantifier.regexp.hash.rainlang"
+            }
+          },
+          "contentName": "support.type.namespace.rainlang"
         }
-      }
+      ]
     },
     "binding": {
-      "match": "(?<=\\s|^)(#)([^#\\s]+)(?=\\s|$)",
+      "match": "(#)([a-zA-Z0-9-_.]+)",
       "captures": {
         "1": {
           "name": "storage.binding.rainlang"
@@ -77,13 +106,13 @@
       }
     },
     "quote": {
-      "match": "'[^\\s()<>:,]*",
-      "name": "string.quoted.double.ts.rainlang" 
+      "match": "'[a-zA-Z0-9-_.]*",
+      "name": "string.quoted.single.rainlang" 
     },
     "number": {
       "patterns": [
         {
-          "include": "#number-normal"
+          "include": "#number-int"
         },
         {
           "include": "#number-e"
@@ -96,9 +125,9 @@
         }
       ]
     },
-    "number-normal": {
+    "number-int": {
       "match": "\\b([0-9]+)\\b",
-      "name": "constant.numeric.normal.rainlang"
+      "name": "constant.numeric.int.rainlang"
     },
     "number-e": {
       "match": "\\b([1-9][0-9]*e[0-9]+)\\b",
@@ -132,12 +161,16 @@
         },
         {
           "match": "\\b(_)\\b",
-          "name": "keyword.output-placeholder.rainlang"
+          "name": "keyword.placeholder.rainlang"
         }
       ]
     },
     "punctuation": {
       "patterns": [
+        {
+          "match": "!",
+          "name": "string.regexp.elision.rainlang"
+        },
         {
           "match": ";",
           "name": "punctuation.terminator.statement.rainlang"

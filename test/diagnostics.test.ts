@@ -30,7 +30,7 @@ suite("Rainlang Diagnostics", async() => {
             { 
                 message : "Out Of Range Inputs", 
                 range   : toRange(2, 6, 2, 9), 
-                code    : 1281,
+                code    : 1537,
                 severity: vscode.DiagnosticSeverity.Error, 
                 source  : "rainlang"
             },
@@ -38,7 +38,7 @@ suite("Rainlang Diagnostics", async() => {
                 message : "Mismatch LHS", 
                 range   : toRange(2, 10, 2, 12), 
                 severity: vscode.DiagnosticSeverity.Error, 
-                code    : 1026,
+                code    : 1282,
                 source  : "rainlang"
             }
         ]);

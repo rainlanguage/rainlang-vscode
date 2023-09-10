@@ -23,7 +23,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const rainlangCompileHandler = async() => {
         const expKeys = Array.from((await vscode.window.showInputBox({
             title: "Expression Names",
-            placeHolder: "exp-1 exp-2 ...",
+            placeHolder: "binding-1 binding-2 ...",
             prompt: "specify the expression names in order by a whitespace seperating them"
         })).matchAll(/[^\s]+/g)).map(v => v[0]);
         const result = await vscode.commands.executeCommand(
@@ -64,28 +64,30 @@ export async function activate(context: vscode.ExtensionContext) {
                         workspaceRootUri, 
                         autoCompile.onSave
                     );
+                    console.log((await vscode.workspace.fs.readFile(mappingFileUri)));
+                    console.log((await vscode.workspace.fs.readFile(mappingFileUri)).toString());
                     const content = JSON.parse(
                         (await vscode.workspace.fs.readFile(mappingFileUri)).toString()
                     );
                     if (Array.isArray(content) && content.length) {
-                        const EXP_PATTERN = /^[a-z][0-9a-z-]*$/;
+                        const ENTRYPOINT_PATTERN = /^[a-z][0-9a-z-]*$/;
                         const JSON_PATH_PATTERN = /^(\.\/)(\.\/|\.\.\/|[^]*\/)*[^]+\.json$/;
                         const DOTRAIN_PATH_PATTERN = /^(\.\/)(\.\/|\.\.\/|[^]*\/)*[^]+\.rain$/;
                         const filesToCompile: {
                             dotrain: vscode.Uri,
                             json: vscode.Uri,
-                            expressions: string[]
+                            entrypoints: string[]
                         }[] = content?.map((v: any) => {
                             if (
                                 typeof v.dotrain === "string"
                                 && DOTRAIN_PATH_PATTERN.test(v.dotrain)
                                 && typeof v.json === "string"
                                 && JSON_PATH_PATTERN.test(v.json)
-                                && Array.isArray(v.expressions)
-                                && v.expressions.length
-                                && v.expressions.every((name: any) => 
+                                && Array.isArray(v.entrypoints)
+                                && v.entrypoints.length
+                                && v.entrypoints.every((name: any) => 
                                     typeof name === "string"
-                                    && EXP_PATTERN.test(name)
+                                    && ENTRYPOINT_PATTERN.test(name)
                                 )
                             ) {
                                 try {
@@ -102,7 +104,7 @@ export async function activate(context: vscode.ExtensionContext) {
                                         return { 
                                             dotrain, 
                                             json, 
-                                            expressions: v.expressions 
+                                            entrypoints: v.entrypoints 
                                         };
                                     }
                                     else return undefined;
@@ -121,7 +123,7 @@ export async function activate(context: vscode.ExtensionContext) {
                                     "_compile",
                                     e.languageId,
                                     e.uri.toString(),
-                                    filesToCompile[i].expressions
+                                    filesToCompile[i].entrypoints
                                 );
                                 const contents: Uint8Array = Buffer.from(
                                     format(
@@ -162,14 +164,13 @@ export async function activate(context: vscode.ExtensionContext) {
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
-            { scheme: "file", language: "rainlang" },
-            { language: "javascript" },
-            { language: "typescript" }
+            { language: "rainlang" },
+            // { language: "javascript" },
+            // { language: "typescript" }
         ],
         synchronize: {
             // Notify the server about file changes to ".clientrc files contained in the workspace
             fileEvents: [
-                // workspace.createFileSystemWatcher("**/*.rain"),
                 vscode.workspace.createFileSystemWatcher("**/.clientrc")
             ]
         },

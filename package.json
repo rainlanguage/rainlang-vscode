@@ -37,10 +37,6 @@
   "engines": {
     "vscode": "^1.75.0"
   },
-  "activationEvents": [
-    "onLanguage:javascript",
-    "onLanguage:typescript"
-  ],
   "contributes": {
     "commands": [
       {
@@ -52,14 +48,6 @@
       "editor/context": [
         {
           "when": "resourceLangId == rainlang",
-          "command": "rainlang.compile"
-        },
-        {
-          "when": "resourceLangId == javascript",
-          "command": "rainlang.compile"
-        },
-        {
-          "when": "resourceLangId == typescript",
           "command": "rainlang.compile"
         }
       ]
@@ -87,6 +75,7 @@
     ],
     "configurationDefaults": {
       "[rainlang]": {
+        "editor.semanticHighlighting.enabled": true,
         "editor.language.colorizedBracketPairs": [
           [
             "<",
@@ -117,7 +106,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "pattern": "^https://api.thegraph.com/subgraphs/name/",
+            "pattern": "^https:|^wss:",
             "minItems": 1
           }
         },
@@ -189,6 +178,14 @@
         ],
         "embeddedLanguages": {
           "meta.embedded.rainlang": "rainlang"
+        }
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "rainlang",
+        "scopes": {
+          "keyword.declaration": ["string.regexp.rainlang"]
         }
       }
     ]

@@ -8,7 +8,7 @@
 			"begin": "(rainlang)(`)",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.tagged-template.js"
+					"name": "support.type.function.tagged-template.js"
 				},
 				"2": {
 					"name": "punctuation.definition.string.template.begin.js"
