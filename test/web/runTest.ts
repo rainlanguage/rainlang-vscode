@@ -22,6 +22,7 @@ import { runTests } from "@vscode/test-web";
             extensionDevelopmentPath,
             extensionTestsPath,
             folderPath,
+            quality: "stable"
             // printServerLog: false
         });
     } 

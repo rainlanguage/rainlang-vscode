@@ -13,7 +13,29 @@ It also includes an End-to-End test.
 
 ## Functionality
 
-Rain Language Server works for rain files with `.rain` extentions as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
+Rain Language Server works for rain files with `.rain` extentions, example:
+```rainlang
+@ opmeta   0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f
+@ contmeta 0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
+  'calling-context new-name /* renaming "calling-context" to "new-name" */
+  base ! /* eliding an item from this imported items */
+
+
+#const-value
+  1e13
+
+#elided-fragment
+  ! this is elided, rebind before using
+
+#main
+  _: add(1 2 opmeta.sub(const-value 2)),
+  _: mul(3 4 contmeta.new-name<'function>() infinity .const-value);
+
+#function
+  _: .opmeta.add(1 2);
+```
+
+as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
 ```typescript
 // rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
 const myExp = rainlang`_: add(1 2)`
@@ -25,13 +47,13 @@ const myExp = rainlang`_: add(1 2)`
 Extension configuration are as follows applied to `user` (except auto compile) or `workspace` vscode json settings i.e. `settings.json`:
 - `subgraphs`: By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs. Specified subgraph URLs must be under `https://api.thegraph.com/subgraphs/name/` domain.
 - `localMetas`: It is possible to set local metas by adding key/value pairs of meta hash and meta content bytes as hex string
-- `autoCompile`: Providing a path to a json file that contains mappings (array) of dotrain files paths and expression names and output json files paths as objects to be compiled and written to their corresponding json files when an action (e.g. save) is triggered, an example of a mapping json content:
+- `autoCompile`: Providing a path to a json file that contains mappings (array) of dotrain files paths and entrypoints (bindings names) that should get compiled and output json files paths which in result are written to their corresponding json files when an action (e.g. save) is triggered, an example of a mapping json content:
 ```json
 [
   {
     "dotrain": "./path/to/dotrain1.rain",
     "json": "./path/to/compiledDotrain1.json",
-    "expressions": [
+    "entrypoints": [
       "exp-1", 
       "exp-2"
     ]
@@ -39,12 +61,13 @@ Extension configuration are as follows applied to `user` (except auto compile) o
   {
     "dotrain": "./path/to/dotrain12.rain",
     "json": "./path/to/compiledDotrain2.json",
-    "expressions": [
+    "entrypoints": [
       "main"
     ]
   }
 ]
 ```
+So the `dotrain` file at the given path will be compiled with specified `entrypoints` to a `json` given path whenevr the save action is triggered.
 Paths MUST be relative to working workspace ROOT directory starting with `./` in UNIX format (i.e. `/` as path seperator)
 Please note that this feature (`autoCompile`) should ONLY be used per workspace i.e. `workspace` settings.json and not globaly on `user` settings.json.
 <br>

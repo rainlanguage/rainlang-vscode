@@ -15,7 +15,7 @@
 		"url": "https://github.com/rainprotocol/rainlang-vscode/issues"
 	},
 	"dependencies": {
-		"@rainprotocol/rainlang": "github:rainprotocol/rainlang#2023-06-09-update-parse-design",
+		"@rainprotocol/rainlang": "github:rainprotocol/rainlang#432b9c6846da850cbc907957777d71dc98a53781",
 		"vscode-languageserver": "^8.1.0"
 	}
 }
