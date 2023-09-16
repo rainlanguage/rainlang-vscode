@@ -64,8 +64,6 @@ export async function activate(context: vscode.ExtensionContext) {
                         workspaceRootUri, 
                         autoCompile.onSave
                     );
-                    console.log((await vscode.workspace.fs.readFile(mappingFileUri)));
-                    console.log((await vscode.workspace.fs.readFile(mappingFileUri)).toString());
                     const content = JSON.parse(
                         (await vscode.workspace.fs.readFile(mappingFileUri)).toString()
                     );

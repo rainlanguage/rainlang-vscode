@@ -18,4 +18,4 @@
   _: mul(3 4 contmeta.new-name<'function>() infinity .const-value);
 
 #function
-  _: .opmeta.add(1 2 777999);
+  _: .opmeta.add(1 2);
