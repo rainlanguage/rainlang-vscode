@@ -122,9 +122,17 @@ connection.onExecuteCommand(async e => {
 
 connection.onDidChangeConfiguration(async() => {
     const settings = await getSetting();
-    if (settings?.subgraphs) metaStore.addSubgraphs(settings.subgraphs);
-    documents.all().forEach(v => {
-        if (v.languageId === "rainlang") validate(v);
+    if (settings?.localMetas) {
+        for (const hash of Object.keys(settings.localMetas)) {
+            await metaStore.updateStore(hash, settings.localMetas[hash]);
+        }
+    }
+    if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
+    documents.all().forEach(async(v) => {
+        if (v.languageId === "rainlang") {
+            langServices.rainDocuments.delete(v.uri);
+            validate(v);
+        }
     });
 });
 

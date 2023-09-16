@@ -33,7 +33,6 @@ let clientCapabilities;
 
 connection.onInitialize(async(params) => {
     clientCapabilities = params.capabilities;
-    console.log((clientCapabilities.textDocument));
     hasWorkspaceFolderCapability = !!(
         clientCapabilities.workspace && !!clientCapabilities.workspace.workspaceFolders
     );
@@ -122,14 +121,17 @@ connection.onExecuteCommand(async e => {
 
 connection.onDidChangeConfiguration(async() => {
     const settings = await getSetting();
-    if (settings?.subgraphs) metaStore.addSubgraphs(settings.subgraphs);
     if (settings?.localMetas) {
         for (const hash of Object.keys(settings.localMetas)) {
-            metaStore.updateStore(hash, settings.localMetas[hash]);
+            await metaStore.updateStore(hash, settings.localMetas[hash]);
         }
     }
-    documents.all().forEach(v => {
-        if (v.languageId === "rainlang") validate(v);
+    if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
+    documents.all().forEach(async(v) => {
+        if (v.languageId === "rainlang") {
+            langServices.rainDocuments.delete(v.uri);
+            validate(v);
+        }
     });
 });
 
