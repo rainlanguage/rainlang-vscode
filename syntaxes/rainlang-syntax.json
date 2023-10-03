@@ -62,37 +62,18 @@
       "name": "keyword.reserved.rainlang"
     },
     "import": {
-      "patterns": [
-        {
-          "match": "(@)\\s*([a-zA-Z0-9-_.]*\\s+)?(0x[a-fA-F0-9]+)",
-          "captures": {
-            "1": {
-              "name": "storage.import.rainlang"
-            },
-            "2": {
-              "name": "support.type.namespace.rainlang"
-            },
-            "3": {
-              "name": "keyword.operator.quantifier.regexp.hash.rainlang"
-            }
-          }
+      "match": "(@)\\s*([a-zA-Z0-9-_.]*\\s+)?(0x[a-fA-F0-9]+)\\b",
+      "captures": {
+        "1": {
+          "name": "storage.import.rainlang"
         },
-        {
-          "begin": "@",
-          "beginCaptures": {
-            "0": {
-              "name": "storage.import.rainlang"
-            }
-          },
-          "end": "\\b0x[a-fA-F0-9]+",
-          "endCaptures": {
-            "0": {
-              "name": "keyword.operator.quantifier.regexp.hash.rainlang"
-            }
-          },
-          "contentName": "support.type.namespace.rainlang"
+        "2": {
+          "name": "support.type.namespace.rainlang"
+        },
+        "3": {
+          "name": "keyword.operator.quantifier.regexp.hash.rainlang"
         }
-      ]
+      }
     },
     "binding": {
       "match": "(#)([a-zA-Z0-9-_.]+)",
@@ -167,6 +148,14 @@
     },
     "punctuation": {
       "patterns": [
+        {
+          "match": "@",
+          "name": "storage.import.rainlang"
+        },
+        {
+          "match": "#",
+          "name": "storage.binding.rainlang"
+        },
         {
           "match": "!",
           "name": "string.regexp.elision.rainlang"

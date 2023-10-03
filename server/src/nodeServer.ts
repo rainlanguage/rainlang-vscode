@@ -5,7 +5,8 @@ import {
     MetaStore,
     TextDocument, 
     RainLanguageServices,
-    getRainLanguageServices 
+    getRainLanguageServices, 
+    RainDocument
 } from "@rainprotocol/rainlang";
 import {
     TextDocuments,
@@ -104,10 +105,10 @@ connection.onExecuteCommand(async e => {
         const uri = e.arguments![1];
         const expKeys = e.arguments![2];
         if (langId === "rainlang") {
-            const _rd = langServices.rainDocuments.get(uri);
-            if (_rd) {
+            const _td = documents.get(uri);
+            if (_td) {
                 try {
-                    return await dotrainc(_rd, expKeys);
+                    return await dotrainc(_td, expKeys);
                 }
                 catch (err) {
                     return err;
@@ -128,10 +129,7 @@ connection.onDidChangeConfiguration(async() => {
     }
     if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
     documents.all().forEach(async(v) => {
-        if (v.languageId === "rainlang") {
-            langServices.rainDocuments.delete(v.uri);
-            validate(v);
-        }
+        if (v.languageId === "rainlang") validate(v);
     });
 });
 
@@ -141,14 +139,10 @@ documents.onDidOpen(v => {
 
 documents.onDidClose(v => {
     connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
-    langServices.rainDocuments.delete(v.document.uri);
 });
 
 documents.onDidChangeContent(change => {
-    if (change.document.languageId === "rainlang") {
-        langServices.rainDocuments.delete(change.document.uri);
-        validate(change.document);
-    }
+    if (change.document.languageId === "rainlang") validate(change.document);
 });
 
 connection.onDidChangeWatchedFiles(_change => {
@@ -179,8 +173,9 @@ connection.onHover(params => {
 // provide semantic token highlighting
 connection.languages.semanticTokens.on(async(e: SemanticTokensParams) => {
     let data: number[];
-    const _rd = langServices.rainDocuments.get(e.textDocument.uri);
-    if (_rd) {
+    const _td = documents.get(e.textDocument.uri);
+    if (_td) {
+        const _rd = await RainDocument.create(_td, metaStore);
         let _lastLine = 0;
         let _lastChar = 0;
         data = _rd.bindings.filter(v => 
