@@ -73,6 +73,10 @@
         }
       }
     ],
+    "jsonValidation": [{
+      "fileMatch": "*.rain.json",
+      "url": "./config.schema.json"
+    }],
     "configurationDefaults": {
       "[rainlang]": {
         "editor.semanticHighlighting.enabled": true,
@@ -100,52 +104,12 @@
       "type": "object",
       "title": "Rain Language",
       "properties": {
-        "rainlang.subgraphs": {
+        "rainlang.config": {
           "scope": "resource",
-          "description": "Additional subgraph endpoint URLs to include when searching for metas of specified meta hashes in a rainlang document.",
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^https:|^wss:",
-            "minItems": 1
-          }
-        },
-        "rainlang.localMetas": {
-          "scope": "resource",
-          "description": "key/value pairs of meta hash and meta bytes.",
-          "type": "object",
-          "minProperties": 1,
-          "additionalProperties": false,
-          "patternProperties": {
-            "^0x[a-fA-F0-9]{64}$": {
-              "type": "string",
-              "pattern": "^0x[a-fA-F0-9]{2,}$"
-            }
-          },
-          "examples": [
-            {
-              "0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f": "0x1234567890..."
-            }
-          ]
-        },
-        "rainlang.autoCompile": {
-          "scope": "window",
-          "type": "object",
-          "description": "Paths of json mapping files used for auto compiling Dotrain files when an action is triggered, such as save, open, close, This feature is ONLY meant to be used for `workspace` settings.json and with `user`.",
-          "additionalProperties": false,
-          "minProperties": 1,
-          "examples": [
-            {
-              "onSave": "./bar/baz.json"
-            }
-          ],
-          "properties": {
-            "onSave": {
-              "type": "string",
-              "description": "Path to a json containing mapping data for Dotrain files paths, expression names and output json files paths to trigger auto compilation on SAVE, path MUST be RELATIVE to current workspace ROOT directory starting with `./` in UNIX format(`/` as path seperator), The mapping file must be a json with array of objects with following format: [{ \"dotrain\": \"./foo.rain\", \"json\": \"./bar/baz.json\", \"expressions\": [\"exp-1\", \"exp-2\"] }], for details about the mapping file content please read https://github.com/rainprotocol/rainlang",
-              "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.json$"
-            }
-          }
+          "title": "Rain Config Path",
+          "description": "Path to the rain config file (must end with *.rain.json) in case 'config.rain.json' doesn't exist in current workspace root directory, it is recommended that the config file be placed at root directory of workspace with the name 'config.rain.json', so only use this option if that not possible",
+          "type": "string",
+          "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.rain.json$"
         },
         "rainlang.trace.server": {
           "scope": "window",
@@ -197,12 +161,10 @@
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "build": "rimraf ./dist && npm run build-node-dev && npm run build-browser-dev",
     "build-prod": "rimraf ./dist && npm run build-node-prod && npm run build-browser-prod",
-    "build-node-dev": "npm run build-node-server -- --sourcemap && npm run build-node-client -- --sourcemap",
-    "build-node-prod": "npm run build-node-server -- --minify && npm run build-node-client -- --minify",
-    "build-browser-dev": "webpack --config ./webpack.dev.js",
-    "build-browser-prod": "webpack --config ./webpack.prod.js",
-    "build-node-client": "esbuild ./client/src/nodeClient.ts --bundle --outfile=./dist/node/client.js --external:vscode --format=cjs --platform=node --target=es2020",
-    "build-node-server": "esbuild ./server/src/nodeServer.ts --bundle --outfile=./dist/node/server.js --external:vscode --format=cjs --platform=node --target=es2020",
+    "build-node-dev": "webpack --config ./webpack.config.js",
+    "build-node-prod": "webpack --config ./webpack.config.js --env production",
+    "build-browser-dev": "webpack --config ./webpack.config.js --env browser",
+    "build-browser-prod": "webpack --config ./webpack.config.js --env production --env browser",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "compile-test": "rimraf ./test/out && tsc -b ./test && webpack -c ./test/webpack.config.js",
@@ -222,9 +184,11 @@
     "@vscode/vsce": "^2.18.0",
     "assert": "^2.0.0",
     "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
     "esbuild": "^0.17.11",
     "eslint": "^8.35.0",
     "mocha": "^10.2.0",
+    "node-polyfill-webpack-plugin": "^2.0.1",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "rimraf": "^4.4.1",
@@ -233,6 +197,7 @@
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5",
     "webpack": "^5.77.0",
-    "webpack-cli": "^5.0.1"
+    "webpack-cli": "^5.0.1",
+    "webpack-node-externals": "^3.0.0"
   }
 }

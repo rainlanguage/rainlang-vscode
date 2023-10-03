@@ -1,11 +1,12 @@
 import { 
-    Range, 
-    dotrainc,
+    Meta, 
+    Range,
+    Compile, 
     ErrorCode, 
-    MetaStore,
     TextDocument, 
     RainLanguageServices,
-    getRainLanguageServices 
+    getRainLanguageServices, 
+    RainDocument
 } from "@rainprotocol/rainlang";
 import {
     TextDocuments,
@@ -25,7 +26,7 @@ const connection = createConnection(ProposedFeatures.all);
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-const metaStore = new MetaStore();
+const metaStore = new Meta.Store();
 let langServices: RainLanguageServices;
 
 let hasWorkspaceFolderCapability = false;
@@ -39,9 +40,10 @@ connection.onInitialize(async(params) => {
 
     // add subgraphs to metaStore
     if (params.initializationOptions) {
-        if (params.initializationOptions.localMetas) {
-            for (const hash of Object.keys(params.initializationOptions.localMetas)) {
-                metaStore.updateStore(hash, params.initializationOptions.localMetas[hash]);
+        // console.log(params.initializationOptions);
+        if (params.initializationOptions.meta) {
+            for (const hash of Object.keys(params.initializationOptions.meta)) {
+                await metaStore.update(hash, params.initializationOptions.meta[hash]);
             }
         }
         if (params.initializationOptions.subgraphs) metaStore.addSubgraphs(
@@ -103,11 +105,12 @@ connection.onExecuteCommand(async e => {
         const langId = e.arguments![0];
         const uri = e.arguments![1];
         const expKeys = e.arguments![2];
+        console.log(langId, uri, expKeys);
         if (langId === "rainlang") {
-            const _rd = langServices.rainDocuments.get(uri);
-            if (_rd) {
+            const _td = documents.get(uri);
+            if (_td) {
                 try {
-                    return await dotrainc(_rd, expKeys);
+                    return await Compile.RainDocument(_td, expKeys);
                 }
                 catch (err) {
                     return err;
@@ -119,19 +122,32 @@ connection.onExecuteCommand(async e => {
     }
 });
 
-connection.onDidChangeConfiguration(async() => {
-    const settings = await getSetting();
-    if (settings?.localMetas) {
-        for (const hash of Object.keys(settings.localMetas)) {
-            await metaStore.updateStore(hash, settings.localMetas[hash]);
+// connection.onDidChangeConfiguration(async() => {
+//     const settings = await getSetting();
+//     if (settings?.localMetas) {
+//         for (const hash of Object.keys(settings.localMetas)) {
+//             await metaStore.update(hash, settings.localMetas[hash]);
+//         }
+//     }
+//     if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
+//     documents.all().forEach(async(v) => {
+//         if (v.languageId === "rainlang") {
+//             langServices.rainDocuments.delete(v.uri);
+//             validate(v);
+//         }
+//     });
+// });
+
+connection.onNotification("change-rain-config", async e => {
+    console.log(e);
+    if (e?.meta) {
+        for (const hash of Object.keys(e.meta)) {
+            await metaStore.update(hash, e.meta[hash]);
         }
     }
-    if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
+    if (e?.subgraphs) await metaStore.addSubgraphs(e.subgraphs);
     documents.all().forEach(async(v) => {
-        if (v.languageId === "rainlang") {
-            langServices.rainDocuments.delete(v.uri);
-            validate(v);
-        }
+        if (v.languageId === "rainlang") validate(v);
     });
 });
 
@@ -141,13 +157,11 @@ documents.onDidOpen(v => {
 
 documents.onDidClose(v => {
     connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
-    langServices.rainDocuments.delete(v.document.uri);
 });
 
-documents.onDidChangeContent(change => {
+documents.onDidChangeContent(async(change) => {
     if (change.document.languageId === "rainlang") {
-        langServices.rainDocuments.delete(change.document.uri);
-        validate(change.document);
+        if (change.document.languageId === "rainlang") validate(change.document);
     }
 });
 
@@ -179,8 +193,9 @@ connection.onHover(params => {
 // provide semantic token highlighting
 connection.languages.semanticTokens.on(async(e: SemanticTokensParams) => {
     let data: number[];
-    const _rd = langServices.rainDocuments.get(e.textDocument.uri);
-    if (_rd) {
+    const _td = documents.get(e.textDocument.uri);
+    if (_td) {
+        const _rd = await RainDocument.create(_td, metaStore);
         let _lastLine = 0;
         let _lastChar = 0;
         data = _rd.bindings.filter(v => 

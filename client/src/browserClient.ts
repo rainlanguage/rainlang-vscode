@@ -5,23 +5,135 @@ import { LanguageClient, LanguageClientOptions } from "vscode-languageclient/bro
 
 
 let client: LanguageClient;
+const defaultConfigPath = "./config.rain.json";
 
 // this method is called when vs code is activated
 export async function activate(context: vscode.ExtensionContext) {
     
+    let configUri: vscode.Uri;
+    let workspaceRootUri: vscode.Uri;
+    const initConfig: any = {};
+    const autoCompile = { onSave: [] };
+
     // get the initial settings and pass them as initialzeOptions to server
     const initSettings = vscode.workspace.getConfiguration("rainlang");
 
-    // Options to control the language client
-    const clientOptions: LanguageClientOptions = {
-        documentSelector: [
-            { language: "rainlang" },
-            // { language: "javascript" },
-            // { language: "typescript" }
-        ],
-        synchronize: {},
-        initializationOptions: JSON.stringify(initSettings)
-    };
+    // setting the config file and init configs
+    const configPath = initSettings.config
+        ? initSettings.config as string 
+        : defaultConfigPath;
+
+    for (let i = 0; i < 5; i++) {
+        workspaceRootUri = getCurrentWorkspaceDir();
+        if (!workspaceRootUri) await sleep(3000);
+        else break;
+    }
+    if (workspaceRootUri) {
+        try {
+            configUri = vscode.Uri.joinPath(
+                workspaceRootUri, 
+                configPath
+            );
+            const content = JSON.parse(
+                String.fromCharCode.apply(
+                    null, (
+                        await vscode.workspace.fs.readFile(configUri)
+                    )
+                )
+            );
+            if (content?.autoCompile?.onSave?.length > 0) {
+                autoCompile.onSave = content.autoCompile.onSave.map((v: any) => ({
+                    source: vscode.Uri.joinPath(
+                        workspaceRootUri, 
+                        v.source
+                    ),
+                    destination: vscode.Uri.joinPath(
+                        workspaceRootUri, 
+                        v.destination
+                    ),
+                    entrypoints: v.entrypoints
+                }));
+            }
+            if (content.meta) initConfig.meta = content.meta;
+            if (content.subgraphs) initConfig.subgraphs = content.subgraphs;
+        }
+        catch { /**/ }
+    }
+
+    vscode.workspace.onDidChangeTextDocument(e => {
+        if (e.document.uri.toString() === configUri.toString()) {
+            const newConfig: any = {};
+            try {
+                const content = JSON.parse(e.document.getText());
+                if (content?.autoCompile?.onSave?.length > 0) {
+                    autoCompile.onSave = content.autoCompile.onSave.map((v: any) => ({
+                        source: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.source
+                        ),
+                        destination: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.destination
+                        ),
+                        entrypoints: v.entrypoints
+                    }));
+                }
+                if (content.meta) newConfig.meta = content.meta;
+                if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
+            }
+            catch { /**/ }
+            client.sendNotification("change-rain-config", JSON.stringify(newConfig));
+        }
+    });
+
+    vscode.workspace.onDidChangeConfiguration(async(e) => {
+        if (e.affectsConfiguration("rainlang.config")) {
+            try {
+                const newConfig: any = {};
+                const newPath = vscode.workspace.getConfiguration("rainlang").config;
+                const newConfigPath = newPath && typeof newPath === "string" 
+                    ? newPath 
+                    : defaultConfigPath;
+                if (newConfigPath && typeof newConfigPath === "string") {
+                    configUri = vscode.Uri.joinPath(
+                        workspaceRootUri, 
+                        newConfigPath
+                    );
+                    try {
+                        const content = JSON.parse(
+                            String.fromCharCode.apply(
+                                null, (
+                                    await vscode.workspace.fs.readFile(configUri)
+                                )
+                            )
+                        );
+                        if (content?.autoCompile?.onSave?.length > 0) {
+                            autoCompile.onSave = content.autoCompile.onSave.map((v: any) => ({
+                                source: vscode.Uri.joinPath(
+                                    workspaceRootUri, 
+                                    v.source
+                                ),
+                                destination: vscode.Uri.joinPath(
+                                    workspaceRootUri, 
+                                    v.destination
+                                ),
+                                entrypoints: v.entrypoints
+                            }));
+                        }
+                        if (content.meta) newConfig.meta = content.meta;
+                        if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
+                        client.sendNotification("change-rain-config", JSON.stringify(newConfig));
+                    }
+                    catch {
+                        vscode.window.showErrorMessage(
+                            "Cannot find or read the config file"
+                        );
+                    }
+                }
+            }
+            catch { /**/ }
+        }
+    });
 
     // channel for rainlang compiler
     let rainlangCompilerChannel: vscode.OutputChannel;
@@ -162,6 +274,44 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // auto compile on save implementation
+    vscode.workspace.onDidSaveTextDocument(async e => {
+        const saveConfig = autoCompile.onSave.find(v => v.source.toString() === e.uri.toString());
+        if (saveConfig) {
+            const workspaceEdit = new vscode.WorkspaceEdit();
+            const result = await vscode.commands.executeCommand(
+                "_compile",
+                e.languageId,
+                e.uri.toString(),
+                JSON.stringify(saveConfig.entrypoints)
+            );
+            const contents: Uint8Array = new Uint8Array(Buffer.from(
+                result 
+                    ? format(
+                        JSON.stringify(result, null, 2), 
+                        { parser: "json", plugins: [ babelParser ] }
+                    )
+                    : "\"failed to compile!\""
+            ));
+            workspaceEdit.createFile(
+                saveConfig.destination,
+                { overwrite: true, contents }
+            );
+            vscode.workspace.applyEdit(workspaceEdit);
+        }
+    });
+
+    // Options to control the language client
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: [
+            { language: "rainlang" },
+            // { language: "javascript" },
+            // { language: "typescript" }
+        ],
+        synchronize: {},
+        initializationOptions: JSON.stringify(initConfig)
+    };
+
     // Create a worker. The worker main file implements the language server.
     const serverMain = vscode.Uri.joinPath(context.extensionUri, "dist/browser/server.js");
     const worker = new Worker(serverMain.toString(true));
@@ -187,4 +337,13 @@ function getCurrentWorkspaceDir(): vscode.Uri | undefined {
     return currentWorkspaceEditor 
         ? vscode.workspace.getWorkspaceFolder(currentWorkspaceEditor)?.uri 
         : undefined;
+}
+
+async function sleep(ms: number) {
+    let _timeoutReference;
+    return new Promise(
+        resolve => _timeoutReference = setTimeout(resolve, ms)
+    ).finally(
+        () => clearTimeout(_timeoutReference)
+    );
 }

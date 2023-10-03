@@ -59,7 +59,7 @@ let
 		name = "shell";
 		buildInputs = [
 			pkgs.nixpkgs-fmt
-			pkgs.nodejs-16_x
+			pkgs.nodejs-18_x
 			build
 			build-all
 			build-prod

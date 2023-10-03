@@ -1,0 +1,14 @@
+{
+  "autoCompile": {
+    "onSave": [
+      {
+        "source": "./test.rain",
+        "destination": "./x/test3.json",
+        "entrypoints": ["main"]
+      }
+    ]
+  },
+  "subgraphs": [
+    "https://api.thegraph.com/subgraphs/name/example/example"
+  ]
+}

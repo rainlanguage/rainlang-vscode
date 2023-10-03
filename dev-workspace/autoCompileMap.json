@@ -1,9 +1,0 @@
-[
-  {
-    "dotrain": "./test.rain",
-    "json": "./autoCompile/test.rain.json",
-    "entrypoints": [
-      "main"
-    ]
-  }
-]
