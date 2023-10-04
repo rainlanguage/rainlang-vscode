@@ -62,7 +62,7 @@
       "name": "keyword.reserved.rainlang"
     },
     "import": {
-      "match": "(@)\\s*([a-zA-Z0-9-_.]*\\s+)?(0x[a-fA-F0-9]+)\\b",
+      "match": "(@)\\s*([a-zA-Z][a-zA-Z0-9-_]*\\s+)?(0(x[a-fA-F0-9]*)?\\b)?",
       "captures": {
         "1": {
           "name": "storage.import.rainlang"

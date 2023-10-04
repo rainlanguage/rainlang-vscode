@@ -42,10 +42,10 @@ connection.onInitialize(async(params) => {
     if (params.initializationOptions) {
         if (params.initializationOptions.localMetas) {
             for (const hash of Object.keys(params.initializationOptions.localMetas)) {
-                metaStore.updateStore(hash, params.initializationOptions.localMetas[hash]);
+                await metaStore.updateStore(hash, params.initializationOptions.localMetas[hash]);
             }
         }
-        if (params.initializationOptions.subgraphs) metaStore.addSubgraphs(
+        if (params.initializationOptions.subgraphs) await metaStore.addSubgraphs(
             params.initializationOptions.subgraphs
         );
     }
