@@ -123,13 +123,15 @@ export async function activate(context: vscode.ExtensionContext) {
                                     e.uri.toString(),
                                     filesToCompile[i].entrypoints
                                 );
-                                const contents: Uint8Array = Buffer.from(
-                                    format(
-                                        result 
-                                            ? JSON.stringify(result, null, 2) 
-                                            : "failed to compile!",
-                                        { parser: "json" }
-                                    )
+                                const contents = Uint8Array.from(
+                                    Array.from(
+                                        result
+                                            ? format(
+                                                JSON.stringify(result, null, 2), 
+                                                { parser: "json" }
+                                            )
+                                            : "\"failed to compile!\""
+                                    ).map(v => v.charCodeAt(0))
                                 );
                                 workspaceEdit.createFile(
                                     filesToCompile[i].json,
