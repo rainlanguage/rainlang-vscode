@@ -49,7 +49,7 @@ connection.onInitialize(async(params: InitializeParams) => {
         if (settings.localMetas) for (const hash of Object.keys(settings.localMetas)) {
             await metaStore.updateStore(hash, settings.localMetas[hash]);
         }
-        if (settings.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
+        if (settings.subgraphs) metaStore.addSubgraphs(settings.subgraphs, false);
     }
 
     langServices = getRainLanguageServices({
