@@ -45,8 +45,9 @@ connection.onInitialize(async(params) => {
                 await metaStore.updateStore(hash, params.initializationOptions.localMetas[hash]);
             }
         }
-        if (params.initializationOptions.subgraphs) await metaStore.addSubgraphs(
-            params.initializationOptions.subgraphs
+        if (params.initializationOptions.subgraphs) metaStore.addSubgraphs(
+            params.initializationOptions.subgraphs,
+            false
         );
     }
 
