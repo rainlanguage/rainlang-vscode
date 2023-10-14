@@ -53,7 +53,8 @@ connection.onInitialize(async(params) => {
 
     langServices = getRainLanguageServices({
         clientCapabilities,
-        metaStore
+        metaStore,
+        noMetaSearch: true
     });
 
     const result: InitializeResult = {
@@ -129,13 +130,11 @@ connection.onDidChangeConfiguration(async() => {
         }
     }
     if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
-    documents.all().forEach(async(v) => {
-        if (v.languageId === "rainlang") validate(v);
-    });
+    documents.all().forEach(async(v) => { validate(v, v.getText(), v.version); });
 });
 
 documents.onDidOpen(v => {
-    if (v.document.languageId === "rainlang") validate(v.document);
+    validate(v.document, v.document.getText(), v.document.version);
 });
 
 documents.onDidClose(v => {
@@ -143,7 +142,7 @@ documents.onDidClose(v => {
 });
 
 documents.onDidChangeContent(change => {
-    if (change.document.languageId === "rainlang") validate(change.document);
+    validate(change.document, change.document.getText(), change.document.version);
 });
 
 connection.onDidChangeWatchedFiles(_change => {
@@ -175,8 +174,10 @@ connection.onHover(params => {
 connection.languages.semanticTokens.on(async(e: SemanticTokensParams) => {
     let data: number[];
     const _td = documents.get(e.textDocument.uri);
-    if (_td) {
-        const _rd = await RainDocument.create(_td, metaStore);
+    if (_td && _td.languageId === "rainlang") {
+        const _rd = new RainDocument(_td, metaStore);
+        (_rd as any)._shouldSearch = false;
+        await _rd.parse();
         let _lastLine = 0;
         let _lastChar = 0;
         data = _rd.bindings.filter(v => 
@@ -278,10 +279,18 @@ async function getSetting() {
 }
 
 // validate a document
-async function validate(textDocument: TextDocument): Promise<void> {
-    // Send the computed diagnostics to VSCode.
-    connection.sendDiagnostics({ 
-        uri: textDocument.uri, 
-        diagnostics: await langServices.doValidate(textDocument)
-    });
+async function validate(textDocument: TextDocument, text: string, version: number) {
+    if (textDocument.languageId === "rainlang") {
+        try {
+            const diagnostics = await langServices.doValidate(
+                TextDocument.create("untitled", "rainlang", 0, text)
+            );
+            // check version of the text document before sending the diagnostics to VSCode
+            if (version === textDocument.version) connection.sendDiagnostics({ 
+                uri: textDocument.uri, 
+                diagnostics
+            });
+        }
+        catch { /**/ }
+    }
 }
