@@ -279,15 +279,18 @@ async function getSetting() {
 }
 
 // validate a document
-async function validate(textDocument: TextDocument, text: string, version: number): Promise<void> {
+async function validate(textDocument: TextDocument, text: string, version: number) {
     if (textDocument.languageId === "rainlang") {
-        const diagnostics = await langServices.doValidate(
-            TextDocument.create("untitled", "rainlang", 0, text)
-        );
-        // check version of the text document before sending the diagnostics to VSCode
-        if (version === textDocument.version) connection.sendDiagnostics({ 
-            uri: textDocument.uri, 
-            diagnostics
-        });
+        try {
+            const diagnostics = await langServices.doValidate(
+                TextDocument.create("untitled", "rainlang", 0, text)
+            );
+            // check version of the text document before sending the diagnostics to VSCode
+            if (version === textDocument.version) connection.sendDiagnostics({ 
+                uri: textDocument.uri, 
+                diagnostics
+            });
+        }
+        catch { /**/ }
     }
 }
