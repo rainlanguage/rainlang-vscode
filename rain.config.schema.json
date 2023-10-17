@@ -1,43 +1,52 @@
 {
   "type": "object",
+  "additionalProperties": true,
   "properties": {
-    "autoCompile": {
+    "dirs": {
+      "type": "array",
+      "description": "Directories of the project that contain rain documents files to watch, default is 'src'",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "title": "Directory"
+      }
+    },
+    "compile": {
       "type": "object",
-      "title": "Auto Compile Mappings", 
-      "description": "Auto compile mappings for file actions, auto compiles source files into destinations when an action is triggered",
-      "additionalProperties": false,
+      "title": "Compilation Mappings", 
+      "description": "Compilation mappings for file actions such as on-save",
       "minProperties": 1,
       "examples": [{
         "onSave": [{
-          "source": "./path/to/source.rain",
-          "destination": "./path/to/destination.json",
+          "input": "./path/to/input.rain",
+          "output": "./path/to/output.json",
           "entrypoints": ["main", "fn"]
         }]
       }],
       "properties": {
         "onSave": {
           "type": "array",
-          "title": "On-Save Auto Compile Mappings",
-          "description": "Mappings for on-save auto compile, where specified .rain source files will automatically be compiled on save and results written into destination json file",
+          "title": "On-Save Compilation Mappings",
+          "description": "Mappings for on-save compilation, where specified .rain input files will automatically be compiled on save and results written into output json file",
           "minItems": 1,
           "items": {
             "type": "object",
             "title": "Mapping",
-            "description": "A single mappping item",
-            "required": ["source", "destination", "entrypoints"],
+            "description": "A single mappping item, all relative paths must be relative to workspace root directory",
+            "required": ["input", "output", "entrypoints"],
             "additionalProperties": false,
             "properties": {
-              "source": {
+              "input": {
                 "type": "string",
-                "title": "Source File Path",
+                "title": "Input File Path",
                 "description": "Path to a .rain file as source to read from",
-                "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.rain$"
+                "pattern": "(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.rain$"
               },
-              "destination": {
+              "output": {
                 "type": "string",
-                "title": "Destination File Path",
-                "description": "Path to a .json file as destination to write results into",
-                "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.json$"
+                "title": "Output File Path",
+                "description": "Path to a .json file as output to write results into",
+                "pattern": "(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.json$"
               },
               "entrypoints": {
                 "type": "array",
@@ -68,7 +77,6 @@
       "description": "key/value pairs of meta hash and meta bytes.",
       "type": "object",
       "minProperties": 1,
-      "additionalProperties": false,
       "patternProperties": {
         "^0x[a-fA-F0-9]{64}$": {
           "type": "string",

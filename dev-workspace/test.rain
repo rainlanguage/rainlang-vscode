@@ -10,11 +10,8 @@
 #const-value
   1e13
 
-/* ignore-next-line */
-# b 
-
 #elided-fragment
   ! this is elided, rebind before using
 
 #main
-  _: .dispair.int-div(7 5878888788778 contmeta.new-name<1>() .const-value);
+  _: .dispair.int-div(7 888 contmeta.new-name<1>() .const-value .contmeta.new-name<1>());

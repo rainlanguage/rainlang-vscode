@@ -7,16 +7,22 @@ This extension provides the following language features:
 - Hovers
 - Syntax Highlighting
 - Semantic Syntax Highlighting
+- .rain files watch and auto-hash
+- .rain Compilation
+- .rain files auto-compile on save
+- access local .rain files from completion suggestions on hash import
+- store local meta hash/content
+- include custom subgraphs for meta sourcing
 
 It also includes an End-to-End test.
 <br>
 
-## Functionality
+## Introduction
 
-Rain Language Server works for rain files with `.rain` extentions, example:
+Rain Language server works for rain files with `.rain` extentions, example:
 ```rainlang
-@ opmeta   0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f
-@ contmeta 0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
+@ dispair   0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f
+@ contract-meta 0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
   'calling-context new-name /* renaming "calling-context" to "new-name" */
   base ! /* eliding an item from this imported items */
 
@@ -28,11 +34,11 @@ Rain Language Server works for rain files with `.rain` extentions, example:
   ! this is elided, rebind before using
 
 #main
-  _: add(1 2 opmeta.sub(const-value 2)),
-  _: mul(3 4 contmeta.new-name<'function>() infinity .const-value);
+  _: add(1 2 dispair.sub(const-value 2)),
+  _: mul(3 4 contract-meta.new-name<'fn>() infinity .const-value);
 
-#function
-  _: .opmeta.add(1 2);
+#fn
+  _: .dispair.add(1 2);
 ```
 
 as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
@@ -40,59 +46,61 @@ as well as syntax highlighting for javascript/typescript [Tagged Template Litera
 // rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
 const myExp = rainlang`_: add(1 2)`
 ```
-
-## Tutorial
-
-### Configurations
-Extension configuration are as follows applied to `user` (except auto compile) or `workspace` vscode json settings i.e. `settings.json`:
-- `subgraphs`: By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/subgraphBook.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs. Specified subgraph URLs must be under `https://api.thegraph.com/subgraphs/name/` domain.
-- `localMetas`: It is possible to set local metas by adding key/value pairs of meta hash and meta content bytes as hex string
-- `autoCompile`: Providing a path to a json file that contains mappings (array) of dotrain files paths and entrypoints (bindings names) that should get compiled and output json files paths which in result are written to their corresponding json files when an action (e.g. save) is triggered, an example of a mapping json content:
-```json
-[
-  {
-    "dotrain": "./path/to/dotrain1.rain",
-    "json": "./path/to/compiledDotrain1.json",
-    "entrypoints": [
-      "exp-1", 
-      "exp-2"
-    ]
-  },
-  {
-    "dotrain": "./path/to/dotrain12.rain",
-    "json": "./path/to/compiledDotrain2.json",
-    "entrypoints": [
-      "main"
-    ]
-  }
-]
-```
-So the `dotrain` file at the given path will be compiled with specified `entrypoints` to a `json` given path whenevr the save action is triggered.
-Paths MUST be relative to working workspace ROOT directory starting with `./` in UNIX format (i.e. `/` as path seperator)
-Please note that this feature (`autoCompile`) should ONLY be used per workspace i.e. `workspace` settings.json and not globaly on `user` settings.json.
 <br>
 
-example:
+## Configurations
+Rainlang configuration (if needed) should be set in json file.
+- It is strongly recommended to use `config.rain.json` file name and put it in the root directory of working workspace as that is the default place and filename this extension looks for to read configuration from, so by doing this no extra configuration is required.
+- File name ending with `*.rain.json` will automatically apply the rain config schema on the file.
+- It is still possible to choose any other name or directory for the config file, but the path of that should be set in vscode `settings.json` in `rainlang.config` key.
+
+### Config file content
+Configuration file contents that are utilized (all are optional):
+- `dirs`: Array of folder paths that contain your .rain files, default is `./src`.
+- `subgraphs`: By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/rainSubgraphs.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs.
+- `meta`: It is possible to set local metas by adding key/value pairs of meta hash and meta content bytes as hex string
+- `compile.onSave`: Mappings (array) of input .rain files paths and entrypoints (bindings names) that should get compiled and written to output json files paths when an action (e.g. save) is triggered, 
+
+an example of a config file content:
 ```json
 {
-  "rainlang.subgraphs": [ 
+  "dirs": ["dir1/path", "dir2/path"],
+  "subgraphs": [
     "https://api.thegraph.com/subgraphs/name/example1/example1",
     "https://api.thegraph.com/subgraphs/name/example2/example2"
   ],
-  "rainlang.localMetas": {
+  "compile": {
+    "onSave": [
+      {
+        "input": "./path/to/input1.rain",
+        "output": "./path/to/compiledOutput1.json",
+        "entrypoints": [
+          "exp-1", 
+          "exp-2"
+        ]
+      },
+      {
+        "input": "./path/to/input2.rain",
+        "output": "./path/to/compiledOutput2.json",
+        "entrypoints": [
+          "main"
+        ]
+      }
+    ]
+  },
+  "meta": {
     "0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f": "0x123456...",
     "0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c": "0xabcdef..."
   },
-  "rainlang.autoCompile": {
-    "onSave": "./path/to/mappings.json"
-  }
 }
 ```
+any other properties can be added to the config file, but wont be utilized by this extension.
 <br>
 
-### Compilation
+## Compilation
 
 Use `Rainlang Compile` command accessible from Command Palette or from editor's context menu (right-click) to compile the selected rainlang document and get the ExpressionConfig.
+Auto compilation mappings can also be set in the config file for specified file to be compiled on save to specified destinations.
 <br>
 
 ## Developers Guide

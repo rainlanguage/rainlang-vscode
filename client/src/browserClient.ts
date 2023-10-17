@@ -10,10 +10,20 @@ const defaultConfigPath = "./config.rain.json";
 // this method is called when vs code is activated
 export async function activate(context: vscode.ExtensionContext) {
     
+    // config file URI
     let configUri: vscode.Uri;
+
+    // workspace root URI
     let workspaceRootUri: vscode.Uri;
-    const initConfig: any = {};
-    const autoCompile = { onSave: [] };
+
+    // directories to check for rain documents, default is "src"
+    let dirs: vscode.Uri[] = [];
+
+    // auto compile mappings
+    const compile = { onSave: [] };
+
+    // channel for rainlang compiler
+    let rainlangCompilerChannel: vscode.OutputChannel;
 
     // get the initial settings and pass them as initialzeOptions to server
     const initSettings = vscode.workspace.getConfiguration("rainlang");
@@ -23,69 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
         ? initSettings.config as string 
         : defaultConfigPath;
 
-    for (let i = 0; i < 5; i++) {
-        workspaceRootUri = getCurrentWorkspaceDir();
-        if (!workspaceRootUri) await sleep(3000);
-        else break;
-    }
-    if (workspaceRootUri) {
-        try {
-            configUri = vscode.Uri.joinPath(
-                workspaceRootUri, 
-                configPath
-            );
-            const content = JSON.parse(
-                String.fromCharCode.apply(
-                    null, (
-                        await vscode.workspace.fs.readFile(configUri)
-                    )
-                )
-            );
-            if (content?.autoCompile?.onSave?.length > 0) {
-                autoCompile.onSave = content.autoCompile.onSave.map((v: any) => ({
-                    source: vscode.Uri.joinPath(
-                        workspaceRootUri, 
-                        v.source
-                    ),
-                    destination: vscode.Uri.joinPath(
-                        workspaceRootUri, 
-                        v.destination
-                    ),
-                    entrypoints: v.entrypoints
-                }));
-            }
-            if (content.meta) initConfig.meta = content.meta;
-            if (content.subgraphs) initConfig.subgraphs = content.subgraphs;
-        }
-        catch { /**/ }
-    }
-
-    vscode.workspace.onDidChangeTextDocument(e => {
-        if (e.document.uri.toString() === configUri.toString()) {
-            const newConfig: any = {};
-            try {
-                const content = JSON.parse(e.document.getText());
-                if (content?.autoCompile?.onSave?.length > 0) {
-                    autoCompile.onSave = content.autoCompile.onSave.map((v: any) => ({
-                        source: vscode.Uri.joinPath(
-                            workspaceRootUri, 
-                            v.source
-                        ),
-                        destination: vscode.Uri.joinPath(
-                            workspaceRootUri, 
-                            v.destination
-                        ),
-                        entrypoints: v.entrypoints
-                    }));
-                }
-                if (content.meta) newConfig.meta = content.meta;
-                if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
-            }
-            catch { /**/ }
-            client.sendNotification("change-rain-config", JSON.stringify(newConfig));
-        }
-    });
-
+    // setup the config file on config change
     vscode.workspace.onDidChangeConfiguration(async(e) => {
         if (e.affectsConfiguration("rainlang.config")) {
             try {
@@ -94,49 +42,198 @@ export async function activate(context: vscode.ExtensionContext) {
                 const newConfigPath = newPath && typeof newPath === "string" 
                     ? newPath 
                     : defaultConfigPath;
-                if (newConfigPath && typeof newConfigPath === "string") {
-                    configUri = vscode.Uri.joinPath(
-                        workspaceRootUri, 
-                        newConfigPath
+                configUri = vscode.Uri.joinPath(
+                    workspaceRootUri, 
+                    newConfigPath
+                );
+                try {
+                    const content = JSON.parse(
+                        uint8ArrayToString(
+                            await vscode.workspace.fs.readFile(configUri)
+                        )
                     );
-                    try {
-                        const content = JSON.parse(
-                            String.fromCharCode.apply(
-                                null, (
-                                    await vscode.workspace.fs.readFile(configUri)
-                                )
-                            )
-                        );
-                        if (content?.autoCompile?.onSave?.length > 0) {
-                            autoCompile.onSave = content.autoCompile.onSave.map((v: any) => ({
-                                source: vscode.Uri.joinPath(
-                                    workspaceRootUri, 
-                                    v.source
-                                ),
-                                destination: vscode.Uri.joinPath(
-                                    workspaceRootUri, 
-                                    v.destination
-                                ),
-                                entrypoints: v.entrypoints
-                            }));
+                    if (content?.compile?.onSave?.length > 0) {
+                        compile.onSave = content.compile.onSave.map((v: any) => ({
+                            input: vscode.Uri.joinPath(
+                                workspaceRootUri, 
+                                v.input
+                            ),
+                            output: vscode.Uri.joinPath(
+                                workspaceRootUri, 
+                                v.output
+                            ),
+                            entrypoints: v.entrypoints
+                        }));
+                    }
+                    if (content.meta) newConfig.meta = content.meta;
+                    if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
+                    client.sendNotification("update-config", JSON.stringify(newConfig));
+
+                    // find .rains on startup and send them to server for storing in meta store
+                    const newDirs: vscode.Uri[] = [];
+                    if (content.dirs && Array.isArray(content.dirs) && content.dirs.length > 0) {
+                        for (let i = 0; i < content.dirs.length; i++) {
+                            const dir = vscode.Uri.joinPath(workspaceRootUri, content.dirs[i]);
+                            newDirs.push(dir);
+                            if (!dirs.find(v => v.toString() === dir.toString())) {
+                                vscode.workspace.findFiles(
+                                    new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
+                                    "**​/node_modules/**"
+                                ).then(
+                                    async v => {
+                                        const dotrains: any[] = [];
+                                        for (let i = 0; i < v.length; i++) dotrains.push([
+                                            v[i].toString(),
+                                            String.fromCharCode.apply(
+                                                null, 
+                                                await vscode.workspace.fs.readFile(v[i])
+                                            )
+                                        ]);
+                                        client.sendNotification("rain-documents", dotrains);
+                                    },
+                                    () => { /**/ }
+                                );
+                            }
                         }
-                        if (content.meta) newConfig.meta = content.meta;
-                        if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
-                        client.sendNotification("change-rain-config", JSON.stringify(newConfig));
                     }
-                    catch {
-                        vscode.window.showErrorMessage(
-                            "Cannot find or read the config file"
-                        );
+                    else {
+                        const dir = vscode.Uri.joinPath(workspaceRootUri, "./src");
+                        newDirs.push(dir);
+                        if (!dirs.find(v => v.toString() === dir.toString())) {
+                            vscode.workspace.findFiles(
+                                new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
+                                "**​/node_modules/**"
+                            ).then(
+                                async v => {
+                                    const dotrains: any[] = [];
+                                    for (let i = 0; i < v.length; i++) dotrains.push([
+                                        v[i].toString(),
+                                        String.fromCharCode.apply(
+                                            null, 
+                                            await vscode.workspace.fs.readFile(v[i])
+                                        )
+                                    ]);
+                                    client.sendNotification("rain-documents", dotrains);
+                                },
+                                () => { /**/ }
+                            );
+                        }
                     }
+                    dirs = newDirs;
+                }
+                catch {
+                    vscode.window.showErrorMessage(
+                        "Cannot find or read the config file"
+                    );
                 }
             }
             catch { /**/ }
         }
     });
 
-    // channel for rainlang compiler
-    let rainlangCompilerChannel: vscode.OutputChannel;
+    // auto compile on save implementation
+    vscode.workspace.onDidSaveTextDocument(async e => {
+        if (e.uri.toString() === configUri.toString()) {
+            const newConfig: any = {};
+            try {
+                const content = JSON.parse(e.getText());
+                if (content?.compile?.onSave?.length > 0) {
+                    compile.onSave = content.compile.onSave.map((v: any) => ({
+                        input: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.input
+                        ),
+                        output: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.output
+                        ),
+                        entrypoints: v.entrypoints
+                    }));
+                }
+                if (content.meta) newConfig.meta = content.meta;
+                if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
+                client.sendNotification("update-config", JSON.stringify(newConfig));
+
+                // find .rains on startup and send them to server for storing in meta store
+                const newDirs: vscode.Uri[] = [];
+                if (content.dirs && Array.isArray(content.dirs) && content.dirs.length > 0) {
+                    for (let i = 0; i < content.dirs.length; i++) {
+                        const dir = vscode.Uri.joinPath(workspaceRootUri, content.dirs[i]);
+                        newDirs.push(dir);
+                        if (!dirs.find(v => v.toString() === dir.toString())) {
+                            vscode.workspace.findFiles(
+                                new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
+                                "**​/node_modules/**"
+                            ).then(
+                                async v => {
+                                    const dotrains: any[] = [];
+                                    for (let i = 0; i < v.length; i++) dotrains.push([
+                                        v[i].toString(),
+                                        String.fromCharCode.apply(
+                                            null, 
+                                            await vscode.workspace.fs.readFile(v[i])
+                                        )
+                                    ]);
+                                    client.sendNotification("rain-documents", dotrains);
+                                },
+                                () => { /**/ }
+                            );
+                        }
+                    }
+                }
+                else {
+                    const dir = vscode.Uri.joinPath(workspaceRootUri, "./src");
+                    newDirs.push(dir);
+                    if (!dirs.find(v => v.toString() === dir.toString())) {
+                        vscode.workspace.findFiles(
+                            new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
+                            "**​/node_modules/**"
+                        ).then(
+                            async v => {
+                                const dotrains: any[] = [];
+                                for (let i = 0; i < v.length; i++) dotrains.push([
+                                    v[i].toString(),
+                                    String.fromCharCode.apply(
+                                        null, 
+                                        await vscode.workspace.fs.readFile(v[i])
+                                    )
+                                ]);
+                                client.sendNotification("rain-documents", dotrains);
+                            },
+                            () => { /**/ }
+                        );
+                    }
+                }
+                dirs = newDirs;
+            }
+            catch { /**/ }
+        }
+        const saveConfig = compile.onSave.find(v => v.input.toString() === e.uri.toString());
+        if (saveConfig) {
+            const workspaceEdit = new vscode.WorkspaceEdit();
+            const result = await vscode.commands.executeCommand(
+                "_compile",
+                e.languageId,
+                e.uri.toString(),
+                JSON.stringify(saveConfig.entrypoints)
+            );
+            const contents = Uint8Array.from(
+                Array.from(
+                    result 
+                        ? format(
+                            JSON.stringify(result, null, 2), 
+                            { parser: "json", plugins: [ babelParser ] }
+                        )
+                        : "\"failed to compile!\""
+                ).map(char => char.charCodeAt(0))
+            );
+            workspaceEdit.createFile(
+                saveConfig.output,
+                { overwrite: true, contents }
+            );
+            vscode.workspace.applyEdit(workspaceEdit);
+        }
+    });
 
     // handler for rainlang compiler, send the request to server and logs the result in output channel
     const rainlangCompileHandler = async() => {
@@ -173,145 +270,14 @@ export async function activate(context: vscode.ExtensionContext) {
         rainlangCompileHandler
     ));
 
-    // auto compile on save implementation
-    vscode.workspace.onDidSaveTextDocument(async e => {
-        const autoCompile = vscode.workspace.getConfiguration("rainlang.autoCompile");
-        if (typeof autoCompile.onSave === "string" && autoCompile.onSave) {
-            const workspaceRootUri = getCurrentWorkspaceDir();
-            if (workspaceRootUri) {
-                try {
-                    const mappingFileUri = vscode.Uri.joinPath(
-                        workspaceRootUri, 
-                        autoCompile.onSave
-                    );
-                    const content = JSON.parse(
-                        String.fromCharCode.apply(
-                            null, (
-                                await vscode.workspace.fs.readFile(mappingFileUri)
-                            )
-                        )
-                    );
-                    if (Array.isArray(content) && content.length) {
-                        const ENTRYPOINT_PATTERN = /^[a-z][0-9a-z-]*$/;
-                        const JSON_PATH_PATTERN = /^(\.\/)(\.\/|\.\.\/|[^]*\/)*[^]+\.json$/;
-                        const DOTRAIN_PATH_PATTERN = /^(\.\/)(\.\/|\.\.\/|[^]*\/)*[^]+\.rain$/;
-                        const filesToCompile: {
-                            dotrain: vscode.Uri,
-                            json: vscode.Uri,
-                            entrypoints: string[]
-                        }[] = content?.map((v: any) => {
-                            if (
-                                typeof v.dotrain === "string"
-                                && DOTRAIN_PATH_PATTERN.test(v.dotrain)
-                                && typeof v.json === "string"
-                                && JSON_PATH_PATTERN.test(v.json)
-                                && Array.isArray(v.entrypoints)
-                                && v.entrypoints.length
-                                && v.entrypoints.every((name: any) => 
-                                    typeof name === "string"
-                                    && ENTRYPOINT_PATTERN.test(name)
-                                )
-                            ) {
-                                try {
-                                    const dotrain = vscode.Uri.joinPath(
-                                        workspaceRootUri,
-                                        v.dotrain
-                                    );
-                                    const json = vscode.Uri.joinPath(
-                                        workspaceRootUri,
-                                        v.json
-                                    );
-                                    if (dotrain && json) {
-                                        return { 
-                                            dotrain, 
-                                            json, 
-                                            entrypoints: v.entrypoints 
-                                        };
-                                    }
-                                    else return undefined;
-                                }
-                                catch { return undefined; }
-                            }
-                            else return undefined;
-                        })?.filter(v => 
-                            v !== undefined && v.dotrain.toString() === e.uri.toString()
-                        ) ?? [];
-                        if (filesToCompile.length) {
-                            const workspaceEdit = new vscode.WorkspaceEdit();
-                            for (let i = 0; i < filesToCompile.length; i++) {
-                                const result = await vscode.commands.executeCommand(
-                                    "_compile",
-                                    e.languageId,
-                                    e.uri.toString(),
-                                    JSON.stringify(filesToCompile[i].entrypoints)
-                                );
-                                const contents = Uint8Array.from(
-                                    Array.from(
-                                        result
-                                            ? format(
-                                                JSON.stringify(result, null, 2), 
-                                                { parser: "json", plugins: [ babelParser ] }
-                                            )
-                                            : "\"failed to compile!\""
-                                    ).map(v => v.charCodeAt(0))
-                                );
-                                workspaceEdit.createFile(
-                                    filesToCompile[i].json,
-                                    { overwrite: true, contents }
-                                );
-                            }
-                            vscode.workspace.applyEdit(workspaceEdit);
-                        }
-                    }
-                }
-                catch (err) {
-                    vscode.window.showErrorMessage(
-                        (err as Error).message
-                    );
-                    vscode.window.showErrorMessage(
-                        "Failed to find mapping file or it contains invalid content"
-                    );
-                }
-            }
-        }
-    });
-
-    // auto compile on save implementation
-    vscode.workspace.onDidSaveTextDocument(async e => {
-        const saveConfig = autoCompile.onSave.find(v => v.source.toString() === e.uri.toString());
-        if (saveConfig) {
-            const workspaceEdit = new vscode.WorkspaceEdit();
-            const result = await vscode.commands.executeCommand(
-                "_compile",
-                e.languageId,
-                e.uri.toString(),
-                JSON.stringify(saveConfig.entrypoints)
-            );
-            const contents: Uint8Array = new Uint8Array(Buffer.from(
-                result 
-                    ? format(
-                        JSON.stringify(result, null, 2), 
-                        { parser: "json", plugins: [ babelParser ] }
-                    )
-                    : "\"failed to compile!\""
-            ));
-            workspaceEdit.createFile(
-                saveConfig.destination,
-                { overwrite: true, contents }
-            );
-            vscode.workspace.applyEdit(workspaceEdit);
-        }
-    });
-
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
             { language: "rainlang" },
-            // { language: "javascript" },
-            // { language: "typescript" }
+            { pattern: "*.rain.json", language: "json" },
         ],
         synchronize: {},
-        initializationOptions: JSON.stringify(initConfig)
+        // initializationOptions: JSON.stringify(initConfig)
     };
 
     // Create a worker. The worker main file implements the language server.
@@ -319,7 +285,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const worker = new Worker(serverMain.toString(true));
 
     // create the language server client to communicate with the server running in the worker
-    const client = new LanguageClient(
+    client = new LanguageClient(
         "rainlang", 
         "Rain Language", 
         clientOptions, 
@@ -327,6 +293,90 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     await client.start();
+
+    // set the workspace root URI on startup
+    client.onNotification("request-config", async e => {
+        if (e !== null) {
+            workspaceRootUri = vscode.Uri.parse(e);
+            // wait for server to fully start
+            // await sleep(6000);
+
+            try {
+                const conf: any = {};
+                configUri = vscode.Uri.joinPath(
+                    workspaceRootUri, 
+                    configPath
+                );
+                const content = JSON.parse(
+                    uint8ArrayToString(
+                        await vscode.workspace.fs.readFile(configUri)
+                    )
+                );
+                if (content?.compile?.onSave?.length > 0) {
+                    compile.onSave = content.compile.onSave.map((v: any) => ({
+                        input: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.input
+                        ),
+                        output: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.output
+                        ),
+                        entrypoints: v.entrypoints
+                    }));
+                }
+                if (content.meta) conf.meta = content.meta;
+                if (content.subgraphs) conf.subgraphs = content.subgraphs;
+                client.sendNotification("update-config", JSON.stringify(conf));
+
+                // find .rains on startup and send them to server for storing in meta store
+                if (content.dirs && Array.isArray(content.dirs) && content.dirs.length > 0) {
+                    for (let i = 0; i < content.dirs.length; i++) {
+                        dirs.push(vscode.Uri.joinPath(workspaceRootUri, content.dirs[i]));
+                        vscode.workspace.findFiles(
+                            new vscode.RelativePattern(dirs[dirs.length - 1], "**/*.rain"), 
+                            "**​/node_modules/**"
+                        ).then(
+                            async v => {
+                                const dotrains: any[] = [];
+                                for (let i = 0; i < v.length; i++) dotrains.push([
+                                    v[i].toString(),
+                                    String.fromCharCode.apply(
+                                        null, 
+                                        await vscode.workspace.fs.readFile(v[i])
+                                    )
+                                ]);
+                                client.sendNotification("rain-documents", dotrains);
+                            },
+                            () => { /**/ }
+                        );
+                    }
+                }
+                else {
+                    dirs.push(vscode.Uri.joinPath(workspaceRootUri, "./src"));
+                    vscode.workspace.findFiles(
+                        new vscode.RelativePattern(dirs[dirs.length - 1], "**/*.rain"), 
+                        "**​/node_modules/**"
+                    ).then(
+                        async v => {
+                            const dotrains: any[] = [];
+                            for (let i = 0; i < v.length; i++) dotrains.push([
+                                v[i].toString(),
+                                String.fromCharCode.apply(
+                                    null, 
+                                    await vscode.workspace.fs.readFile(v[i])
+                                )
+                            ]);
+                            client.sendNotification("rain-documents", dotrains);
+                        },
+                        () => { /**/ }
+                    );
+                }
+            }
+            catch { /**/ }
+        }
+
+    });
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -342,10 +392,18 @@ function getCurrentWorkspaceDir(): vscode.Uri | undefined {
 }
 
 async function sleep(ms: number) {
-    let _timeoutReference;
+    let _to;
     return new Promise(
-        resolve => _timeoutReference = setTimeout(resolve, ms)
+        resolve => _to = setTimeout(resolve, ms)
     ).finally(
-        () => clearTimeout(_timeoutReference)
+        () => clearTimeout(_to)
     );
+}
+
+function uint8ArrayToString(uint8array: Uint8Array): string {
+    let str = "";
+    for (let i = 0; i < uint8array.length; i++) {
+        str = str + String.fromCharCode(uint8array[i]);
+    }
+    return str;
 }

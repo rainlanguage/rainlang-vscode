@@ -36,21 +36,27 @@ let langServices: RainLanguageServices;
 
 let hasWorkspaceFolderCapability = false;
 let clientCapabilities;
+let workspaceRootUri: string | null;
 
 connection.onInitialize(async(params: InitializeParams) => {
+    workspaceRootUri = params.rootUri !== null 
+        ? params.rootUri 
+        : params.workspaceFolders && params.workspaceFolders.length > 0 
+            ? params.workspaceFolders[0].uri 
+            : null;
     clientCapabilities = params.capabilities;
     hasWorkspaceFolderCapability = !!(
         clientCapabilities.workspace && !!clientCapabilities.workspace.workspaceFolders
     );
 
-    // add subgraphs to metaStore
-    if (params.initializationOptions) {
-        const settings = JSON.parse(params.initializationOptions);
-        if (settings.localMetas) for (const hash of Object.keys(settings.localMetas)) {
-            await metaStore.update(hash, settings.localMetas[hash]);
-        }
-        if (settings.subgraphs) metaStore.addSubgraphs(settings.subgraphs, false);
-    }
+    // // add subgraphs to metaStore
+    // if (params.initializationOptions) {
+    //     const settings = JSON.parse(params.initializationOptions);
+    //     if (settings.localMetas) for (const hash of Object.keys(settings.localMetas)) {
+    //         await metaStore.update(hash, settings.localMetas[hash]);
+    //     }
+    //     if (settings.subgraphs) metaStore.addSubgraphs(settings.subgraphs);
+    // }
 
     langServices = getRainLanguageServices({
         clientCapabilities,
@@ -66,7 +72,7 @@ connection.onInitialize(async(params: InitializeParams) => {
                 completionItem: {
                     labelDetailsSupport: true
                 },
-                triggerCharacters: ["."]
+                triggerCharacters: [".", "'", "/"]
             },
             hoverProvider: true,
             executeCommandProvider: {
@@ -98,6 +104,32 @@ connection.onInitialized(() => {
             connection.console.log("Workspace folder change event received.");
         });
     }
+    // send notif to client to get config
+    connection.sendNotification("request-config", workspaceRootUri);
+});
+
+// store local rain documents to the meta store
+connection.onNotification("rain-documents", async e => {
+    for (let i = 0; i < e.length; i++) {
+        if ((e[i][0] as string).endsWith(".rain")) {
+            await metaStore.storeDotrain(e[i][1], e[i][0]);
+        }
+    }
+});
+
+// update meta store when config has changed and revalidate documents
+connection.onNotification("update-config", async e => {
+    try {
+        const _conf = JSON.parse(e);
+        if (_conf?.meta) {
+            for (const hash in _conf.meta) {
+                await metaStore.update(hash, _conf.meta[hash]);
+            }
+        }
+        if (_conf?.subgraphs) await metaStore.addSubgraphs(_conf.subgraphs);
+        documents.all().forEach(v => { validate(v, v.getText(), v.version); });
+    }
+    catch { /**/ }
 });
 
 // executes rain compile command
@@ -107,10 +139,10 @@ connection.onExecuteCommand(async e => {
         const uri = e.arguments![1];
         const expKeys = JSON.parse(e.arguments![2]);
         if (langId === "rainlang") {
-            const _rd = documents.get(uri);
-            if (_rd) {
+            const _td = documents.get(uri);
+            if (_td) {
                 try {
-                    return await Compile.RainDocument(_rd, expKeys);
+                    return await Compile.RainDocument(_td, expKeys, {metaStore});
                 }
                 catch (err) {
                     return err;
@@ -122,16 +154,20 @@ connection.onExecuteCommand(async e => {
     }
 });
 
-connection.onDidChangeConfiguration(async() => {
-    const settings = await getSetting();
-    if (settings?.localMetas) {
-        for (const hash of Object.keys(settings.localMetas)) {
-            await metaStore.update(hash, settings.localMetas[hash]);
-        }
-    }
-    if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
-    documents.all().forEach(async(v) => { validate(v, v.getText(), v.version); });
-});
+// connection.onDidChangeConfiguration(async() => {
+//     const settings = await getSetting();
+//     if (settings?.localMetas) {
+//         for (const hash of Object.keys(settings.localMetas)) {
+//             await metaStore.update(hash, settings.localMetas[hash]);
+//         }
+//     }
+//     if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
+//     documents.all().forEach(async(v) => {
+//         if (v.languageId === "rainlang") {
+//             validate(v);
+//         }
+//     });
+// });
 
 documents.onDidOpen(v => {
     validate(v.document, v.document.getText(), v.document.version);
@@ -143,6 +179,12 @@ documents.onDidClose(v => {
 
 documents.onDidChangeContent(change => {
     validate(change.document, change.document.getText(), change.document.version);
+});
+
+documents.onDidSave(async e => {
+    if (e.document.languageId === "rainlang") {
+        await metaStore.storeDotrain(e.document.getText(), e.document.uri);
+    }
 });
 
 connection.onCompletion(params => {
@@ -278,7 +320,7 @@ async function validate(textDocument: TextDocument, text: string, version: numbe
     if (textDocument.languageId === "rainlang") {
         try {
             const diagnostics = await langServices.doValidate(
-                TextDocument.create("untitled", "rainlang", 0, text)
+                TextDocument.create(textDocument.uri, "rainlang", 0, text)
             );
             // check version of the text document before sending the diagnostics to VSCode
             if (version === textDocument.version) connection.sendDiagnostics({ 

@@ -27,7 +27,7 @@
     ["[", "]"],
     ["/**", "*/"]
   ],
-  "wordPattern": "[a-zA-Z0-9-_]+",
+  "wordPattern": "[a-zA-Z0-9-_\\/]+",
   "onEnterRules": [
     {
       // e.g. /** | */

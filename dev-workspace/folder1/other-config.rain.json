@@ -1,9 +1,9 @@
 {
-  "autoCompile": {
+  "compile": {
     "onSave": [
       {
-        "source": "./test.rain",
-        "destination": "./x/test3.json",
+        "input": "./test.rain",
+        "output": "./test.rain.output.json",
         "entrypoints": ["main"]
       }
     ]

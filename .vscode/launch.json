@@ -33,7 +33,17 @@
 			"preLaunchTask": {
 				"type": "npm",
 				"script": "build-browser-dev"
-			}
+			},
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to Server",
+			"port": 6009,
+			"restart": true,
+			"outFiles": [
+				"${workspaceRoot}/server/dist/**/*.js"
+			]
 		},
 		{
 			// desktop e2e test runner
@@ -63,6 +73,15 @@
 				"${workspaceRoot}/fixtures"		// workspace to open automatically
 			],
 			"outFiles": ["${workspaceRoot}/test/out/web/**/*.js"]
+		}
+	],
+	"compounds": [
+		{
+			"name": "Launch Client Web + Server",
+			"configurations": [
+				"Launch Client Web",
+				"Attach to Server"
+			]
 		}
 	]
 }

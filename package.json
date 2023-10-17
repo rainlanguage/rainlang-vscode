@@ -73,10 +73,12 @@
         }
       }
     ],
-    "jsonValidation": [{
-      "fileMatch": "*.rain.json",
-      "url": "./config.schema.json"
-    }],
+    "jsonValidation": [
+      {
+        "fileMatch": "*.rain.json",
+        "url": "./rain.config.schema.json"
+      }
+    ],
     "configurationDefaults": {
       "[rainlang]": {
         "editor.semanticHighlighting.enabled": true,
@@ -109,7 +111,7 @@
           "title": "Rain Config Path",
           "description": "Path to the rain config file (must end with *.rain.json) in case 'config.rain.json' doesn't exist in current workspace root directory, it is recommended that the config file be placed at root directory of workspace with the name 'config.rain.json', so only use this option if that not possible",
           "type": "string",
-          "pattern": "^(\\./)(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.rain.json$"
+          "pattern": "(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.rain.json$"
         },
         "rainlang.trace.server": {
           "scope": "window",
@@ -184,7 +186,6 @@
     "@vscode/vsce": "^2.18.0",
     "assert": "^2.0.0",
     "buffer": "^6.0.3",
-    "crypto-browserify": "^3.12.0",
     "esbuild": "^0.17.11",
     "eslint": "^8.35.0",
     "mocha": "^10.2.0",

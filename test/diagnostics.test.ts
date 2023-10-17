@@ -7,7 +7,7 @@ async function testDiagnostics(docUri: vscode.Uri, expectedDiagnostics: vscode.D
     await activate(docUri);
     const actualDiagnostics = vscode.languages.getDiagnostics(docUri);
 
-    assert.equal(actualDiagnostics.length, 2);
+    assert.equal(actualDiagnostics.length, 1);
     expectedDiagnostics.forEach((expectedDiagnostic, i) => {
         const actualDiagnostic = actualDiagnostics[i];
         assert.equal(actualDiagnostic.message, expectedDiagnostic.message);
@@ -18,7 +18,7 @@ async function testDiagnostics(docUri: vscode.Uri, expectedDiagnostics: vscode.D
     });
 }
 
-suite("Rainlang Diagnostics", async() => {
+suite("Rainlang Diagnostics", () => {
 
     const docUri = getDocUri(
         vscode.workspace.workspaceFolders![0].uri, // the workspace URI of the vscode dev instance
@@ -27,18 +27,18 @@ suite("Rainlang Diagnostics", async() => {
 
     test("Should detect diagnostics correctly", async () => {
         await testDiagnostics(docUri, [
+            // { 
+            //     message : "UnknownO", 
+            //     range   : toRange(2, 6, 2, 9), 
+            //     code    : 1537,
+            //     severity: vscode.DiagnosticSeverity.Error, 
+            //     source  : "rainlang"
+            // },
             { 
-                message : "Out Of Range Inputs", 
-                range   : toRange(2, 6, 2, 9), 
-                code    : 1537,
+                message : "Expected Semi", 
+                range   : toRange(2, 16, 2, 16), 
                 severity: vscode.DiagnosticSeverity.Error, 
-                source  : "rainlang"
-            },
-            { 
-                message : "Mismatch LHS", 
-                range   : toRange(2, 10, 2, 12), 
-                severity: vscode.DiagnosticSeverity.Error, 
-                code    : 1282,
+                code    : 1032,
                 source  : "rainlang"
             }
         ]);

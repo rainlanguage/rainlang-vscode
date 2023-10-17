@@ -42,7 +42,7 @@ export async function activate(docUri: vscode.Uri): Promise<{
         // activate only if not already active
         if (!ext.isActive) {
             await ext.activate();
-            await sleep(3000); // Wait for server activation
+            await sleep(5000); // Wait for server activation
         }
         const doc = await vscode.workspace.openTextDocument(docUri);
         const editor = await vscode.window.showTextDocument(doc);
