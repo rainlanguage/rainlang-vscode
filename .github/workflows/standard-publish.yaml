@@ -23,12 +23,12 @@ jobs:
         uses: actions/checkout@v3
 
       # Install node
-      - name: Install NodeJS v16
+      - name: Install NodeJS v18
         id: node
         if: steps.checkout.outcome == 'success'
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           cache: 'npm'
 
       # Install deps
@@ -49,10 +49,16 @@ jobs:
         if: steps.build.outcome == 'success'
         run: npm run lint
 
+      # install playwright
+      - name: Install Playwright
+        id: playwright
+        if: steps.lint.outcome == 'success'
+        run: npx playwright install
+
       # Run the tests
       - name: Test
         id: test
-        if: steps.lint.outcome == 'success'
+        if: steps.playwright.outcome == 'success'
         # needs headless setup
         uses: coactions/setup-xvfb@v1
         with:
