@@ -1,5 +1,5 @@
 {
-  "dirs": ["./x"],
+  "dirs": ["./folder1", "./folder2"],
   "compile": {
     "onSave": [
       {
