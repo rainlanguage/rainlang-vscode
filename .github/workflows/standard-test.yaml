@@ -32,6 +32,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Lint the source code
+      - name: Install Playwright
+        run: npx playwright install
+
       # Run the desktop tests using headless setup
       - name: Desktop Extension Test
         uses: coactions/setup-xvfb@v1
