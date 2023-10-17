@@ -138,9 +138,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Publish to vscode marketplace
-      - name: Publish To vscode Marketplace
-        if: steps.release.outcome == 'success'
+      # Publish an official version to vscode marketplace
+      - name: Official Publish To vscode Marketplace
+        if: steps.release.outcome == 'success' && contains(github.event.head_commit.message, '[pre-release]') != true
         run: y | npx vsce publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      # Publish a pre-release version to vscode marketplace
+      - name: Pre-release Publish To vscode Marketplace
+        if: steps.release.outcome == 'success' && contains(github.event.head_commit.message, '[pre-release]')
+        run: y | npx vsce publish --pre-release
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
