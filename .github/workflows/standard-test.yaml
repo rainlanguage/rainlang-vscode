@@ -32,7 +32,7 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Lint the source code
+      # install playwright
       - name: Install Playwright
         run: npx playwright install
 
