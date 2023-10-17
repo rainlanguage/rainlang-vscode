@@ -278,7 +278,7 @@ async function validate(textDocument: TextDocument, text: string, version: numbe
     if (textDocument.languageId === "rainlang") {
         try {
             const diagnostics = await langServices.doValidate(
-                TextDocument.create("untitled", "rainlang", 0, text)
+                TextDocument.create(textDocument.uri, "rainlang", 0, text)
             );
             // check version of the text document before sending the diagnostics to VSCode
             if (version === textDocument.version) connection.sendDiagnostics({ 
