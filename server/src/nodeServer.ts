@@ -6,7 +6,8 @@ import {
     TextDocument, 
     RainLanguageServices,
     getRainLanguageServices, 
-    RainDocument
+    RainDocument,
+    HASH_PATTERN
 } from "@rainprotocol/rainlang";
 import {
     TextDocuments,
@@ -15,7 +16,8 @@ import {
     InitializeResult,
     TextDocumentSyncKind,
     SemanticTokensParams,
-    DidChangeConfigurationNotification 
+    DidChangeConfigurationNotification, 
+    TextEdit
 } from "vscode-languageserver/node";
 
 
@@ -25,6 +27,7 @@ const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+const hashMap: Map<string, { hash: string; range: Range }[]> = new Map();
 
 const metaStore = new Meta.Store();
 let langServices: RainLanguageServices;
@@ -108,14 +111,30 @@ connection.onInitialized(() => {
     connection.sendNotification("request-config", workspaceRootUri);
 });
 
-// store local rain documents to the meta store
-connection.onNotification("rain-documents", async e => {
-    for (let i = 0; i < e.length; i++) {
-        if ((e[i][0] as string).endsWith(".rain")) {
-            await metaStore.storeDotrain(e[i][1], e[i][0]);
-        }
-    }
-});
+// // store local rain documents to the meta store
+// connection.onNotification("watched-rain-documents", async e => {
+//     for (let i = 0; i < e.length; i++) if (e[i][0].endsWith(".rain")) {
+//         await metaStore.storeDotrain(e[i][1], e[i][0]);
+//         const texDocument = TextDocument.create(e[i][0], "rainlang", 0, e[i][1]);
+//         const rainDocument = new RainDocument(texDocument, metaStore);
+//         (rainDocument as any)._shouldSearch = false;
+//         await rainDocument.parse();
+//         hashMap.set(
+//             texDocument.uri, 
+//             rainDocument.imports.filter(
+//                 v => HASH_PATTERN.test(v.hash)
+//             ).map(
+//                 v => ({
+//                     hash: v.hash.toLowerCase(), 
+//                     range: Range.create(
+//                         texDocument.positionAt(v.hashPosition[0]),
+//                         texDocument.positionAt(v.hashPosition[1] + 1)
+//                     ) 
+//                 })
+//             )
+//         );
+//     }
+// });
 
 // update meta store when config has changed and revalidate documents
 connection.onNotification("update-config", async e => {
@@ -163,7 +182,9 @@ connection.onExecuteCommand(async e => {
 // });
 
 documents.onDidOpen(v => {
-    validate(v.document, v.document.getText(), v.document.version);
+    const text = v.document.getText();
+    validate(v.document, text, v.document.version);
+    metaStore.storeDotrain(text, v.document.uri);
 });
 
 documents.onDidClose(v => {
@@ -175,9 +196,38 @@ documents.onDidChangeContent(change => {
 });
 
 documents.onDidSave(e => {
-    if (e.document.languageId === "rainlang") {
-        metaStore.storeDotrain(e.document.getText(), e.document.uri);
-    }
+    if (e.document.languageId === "rainlang") metaStore.storeDotrain(
+        e.document.getText(), e.document.uri
+    ).then(({ newHash, oldHash }) => {
+        const changes: { [uri: string]: TextEdit[] } = {};
+        if (oldHash !== undefined) {
+            hashMap.forEach((imports, uri) => {
+                if (uri !== e.document.uri) {
+                    let imp;
+                    if (imp = imports.find(e => e.hash.toLowerCase() === oldHash.toLowerCase())) {
+                        changes[uri] = [{ range: imp.range, newText: newHash }];
+                    }
+                }
+            });
+            if (Object.keys(changes).length > 0) connection.workspace.applyEdit({ changes });
+        }
+    });
+});
+
+connection.workspace.onDidDeleteFiles(deleted => {
+    deleted.files.forEach(v => {
+        if (v.uri.endsWith(".rain")) {
+            const hash = metaStore.dotrainCache[v.uri];
+            metaStore.deleteDotrain(v.uri);
+            hashMap.delete(v.uri);
+            if (hash !== undefined) hashMap.forEach((imports, uri) => {
+                if (imports.find(e => e.hash.toLowerCase() === hash.toLowerCase())) {
+                    const doc = documents.get(uri);
+                    if (doc) validate(doc, doc.getText(), doc.version);
+                }
+            });
+        }
+    });
 });
 
 connection.onDidChangeWatchedFiles(_change => {
@@ -317,14 +367,30 @@ async function getSetting() {
 async function validate(textDocument: TextDocument, text: string, version: number) {
     if (textDocument.languageId === "rainlang") {
         try {
-            const diagnostics = await langServices.doValidate(
-                TextDocument.create(textDocument.uri, "rainlang", 0, text)
-            );
+            const td = TextDocument.create(textDocument.uri, "rainlang", 0, text);
+            const rainDocument = await RainDocument.create(td, metaStore);
+            const diagnostics = await langServices.doValidate(rainDocument);
             // check version of the text document before sending the diagnostics to VSCode
-            if (version === textDocument.version) connection.sendDiagnostics({ 
-                uri: textDocument.uri, 
-                diagnostics
-            });
+            if (version === textDocument.version) {
+                connection.sendDiagnostics({ 
+                    uri: textDocument.uri, 
+                    diagnostics
+                });
+                hashMap.set(
+                    textDocument.uri, 
+                    rainDocument.imports.filter(
+                        v => HASH_PATTERN.test(v.hash)
+                    ).map(
+                        v => ({
+                            hash: v.hash.toLowerCase(), 
+                            range: Range.create(
+                                td.positionAt(v.hashPosition[0]),
+                                td.positionAt(v.hashPosition[1] + 1)
+                            ) 
+                        })
+                    )
+                );
+            }
         }
         catch { /**/ }
     }

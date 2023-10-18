@@ -80,17 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
                                     new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
                                     "**​/node_modules/**"
                                 ).then(
-                                    async v => {
-                                        const dotrains: any[] = [];
-                                        for (let i = 0; i < v.length; i++) dotrains.push([
-                                            v[i].toString(),
-                                            String.fromCharCode.apply(
-                                                null, 
-                                                await vscode.workspace.fs.readFile(v[i])
-                                            )
-                                        ]);
-                                        client.sendNotification("rain-documents", dotrains);
-                                    },
+                                    v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
                                     () => { /**/ }
                                 );
                             }
@@ -104,17 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
                                 new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
                                 "**​/node_modules/**"
                             ).then(
-                                async v => {
-                                    const dotrains: any[] = [];
-                                    for (let i = 0; i < v.length; i++) dotrains.push([
-                                        v[i].toString(),
-                                        String.fromCharCode.apply(
-                                            null, 
-                                            await vscode.workspace.fs.readFile(v[i])
-                                        )
-                                    ]);
-                                    client.sendNotification("rain-documents", dotrains);
-                                },
+                                v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
                                 () => { /**/ }
                             );
                         }
@@ -165,17 +145,7 @@ export async function activate(context: vscode.ExtensionContext) {
                                 new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
                                 "**​/node_modules/**"
                             ).then(
-                                async v => {
-                                    const dotrains: any[] = [];
-                                    for (let i = 0; i < v.length; i++) dotrains.push([
-                                        v[i].toString(),
-                                        String.fromCharCode.apply(
-                                            null, 
-                                            await vscode.workspace.fs.readFile(v[i])
-                                        )
-                                    ]);
-                                    client.sendNotification("rain-documents", dotrains);
-                                },
+                                v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
                                 () => { /**/ }
                             );
                         }
@@ -189,17 +159,7 @@ export async function activate(context: vscode.ExtensionContext) {
                             new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
                             "**​/node_modules/**"
                         ).then(
-                            async v => {
-                                const dotrains: any[] = [];
-                                for (let i = 0; i < v.length; i++) dotrains.push([
-                                    v[i].toString(),
-                                    String.fromCharCode.apply(
-                                        null, 
-                                        await vscode.workspace.fs.readFile(v[i])
-                                    )
-                                ]);
-                                client.sendNotification("rain-documents", dotrains);
-                            },
+                            v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
                             () => { /**/ }
                         );
                     }
@@ -300,7 +260,6 @@ export async function activate(context: vscode.ExtensionContext) {
             workspaceRootUri = vscode.Uri.parse(e);
             // wait for server to fully start
             // await sleep(6000);
-
             try {
                 const conf: any = {};
                 configUri = vscode.Uri.joinPath(
@@ -337,17 +296,7 @@ export async function activate(context: vscode.ExtensionContext) {
                             new vscode.RelativePattern(dirs[dirs.length - 1], "**/*.rain"), 
                             "**​/node_modules/**"
                         ).then(
-                            async v => {
-                                const dotrains: any[] = [];
-                                for (let i = 0; i < v.length; i++) dotrains.push([
-                                    v[i].toString(),
-                                    String.fromCharCode.apply(
-                                        null, 
-                                        await vscode.workspace.fs.readFile(v[i])
-                                    )
-                                ]);
-                                client.sendNotification("rain-documents", dotrains);
-                            },
+                            v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
                             () => { /**/ }
                         );
                     }
@@ -358,17 +307,7 @@ export async function activate(context: vscode.ExtensionContext) {
                         new vscode.RelativePattern(dirs[dirs.length - 1], "**/*.rain"), 
                         "**​/node_modules/**"
                     ).then(
-                        async v => {
-                            const dotrains: any[] = [];
-                            for (let i = 0; i < v.length; i++) dotrains.push([
-                                v[i].toString(),
-                                String.fromCharCode.apply(
-                                    null, 
-                                    await vscode.workspace.fs.readFile(v[i])
-                                )
-                            ]);
-                            client.sendNotification("rain-documents", dotrains);
-                        },
+                        v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
                         () => { /**/ }
                     );
                 }
