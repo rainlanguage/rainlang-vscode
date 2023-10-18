@@ -3,21 +3,21 @@ import {
     Range,
     Compile, 
     ErrorCode, 
+    RainDocument,
+    HASH_PATTERN, 
     TextDocument, 
     RainLanguageServices,
-    getRainLanguageServices, 
-    RainDocument,
-    HASH_PATTERN
+    getRainLanguageServices 
 } from "@rainprotocol/rainlang";
 import {
+    TextEdit, 
     TextDocuments,
     createConnection,
     ProposedFeatures,
     InitializeResult,
     TextDocumentSyncKind,
     SemanticTokensParams,
-    DidChangeConfigurationNotification, 
-    TextEdit
+    DidChangeConfigurationNotification 
 } from "vscode-languageserver/node";
 
 
@@ -27,6 +27,8 @@ const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+// map of rain documents import hashs for the purpose of auto update the local import hashs
 const hashMap: Map<string, { hash: string; range: Range }[]> = new Map();
 
 const metaStore = new Meta.Store();

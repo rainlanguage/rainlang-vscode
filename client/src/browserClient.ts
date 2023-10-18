@@ -46,48 +46,33 @@ export async function activate(context: vscode.ExtensionContext) {
                     workspaceRootUri, 
                     newConfigPath
                 );
-                try {
-                    const content = JSON.parse(
-                        uint8ArrayToString(
-                            await vscode.workspace.fs.readFile(configUri)
-                        )
-                    );
-                    if (content?.compile?.onSave?.length > 0) {
-                        compile.onSave = content.compile.onSave.map((v: any) => ({
-                            input: vscode.Uri.joinPath(
-                                workspaceRootUri, 
-                                v.input
-                            ),
-                            output: vscode.Uri.joinPath(
-                                workspaceRootUri, 
-                                v.output
-                            ),
-                            entrypoints: v.entrypoints
-                        }));
-                    }
-                    if (content.meta) newConfig.meta = content.meta;
-                    if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
-                    client.sendNotification("update-config", JSON.stringify(newConfig));
+                const content = JSON.parse(
+                    uint8ArrayToString(
+                        await vscode.workspace.fs.readFile(configUri)
+                    )
+                );
+                if (content?.compile?.onSave?.length > 0) {
+                    compile.onSave = content.compile.onSave.map((v: any) => ({
+                        input: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.input
+                        ),
+                        output: vscode.Uri.joinPath(
+                            workspaceRootUri, 
+                            v.output
+                        ),
+                        entrypoints: v.entrypoints
+                    }));
+                }
+                if (content.meta) newConfig.meta = content.meta;
+                if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
+                client.sendNotification("update-config", JSON.stringify(newConfig));
 
-                    // find .rains on startup and send them to server for storing in meta store
-                    const newDirs: vscode.Uri[] = [];
-                    if (content.dirs && Array.isArray(content.dirs) && content.dirs.length > 0) {
-                        for (let i = 0; i < content.dirs.length; i++) {
-                            const dir = vscode.Uri.joinPath(workspaceRootUri, content.dirs[i]);
-                            newDirs.push(dir);
-                            if (!dirs.find(v => v.toString() === dir.toString())) {
-                                vscode.workspace.findFiles(
-                                    new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
-                                    "**​/node_modules/**"
-                                ).then(
-                                    v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
-                                    () => { /**/ }
-                                );
-                            }
-                        }
-                    }
-                    else {
-                        const dir = vscode.Uri.joinPath(workspaceRootUri, "./src");
+                // find .rains on startup and send them to server for storing in meta store
+                const newDirs: vscode.Uri[] = [];
+                if (content.dirs && Array.isArray(content.dirs) && content.dirs.length > 0) {
+                    for (let i = 0; i < content.dirs.length; i++) {
+                        const dir = vscode.Uri.joinPath(workspaceRootUri, content.dirs[i]);
                         newDirs.push(dir);
                         if (!dirs.find(v => v.toString() === dir.toString())) {
                             vscode.workspace.findFiles(
@@ -99,15 +84,29 @@ export async function activate(context: vscode.ExtensionContext) {
                             );
                         }
                     }
-                    dirs = newDirs;
                 }
-                catch {
-                    vscode.window.showErrorMessage(
-                        "Cannot find or read the config file"
-                    );
+                else {
+                    const dir = vscode.Uri.joinPath(workspaceRootUri, "./src");
+                    newDirs.push(dir);
+                    if (!dirs.find(v => v.toString() === dir.toString())) {
+                        vscode.workspace.findFiles(
+                            new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
+                            "**​/node_modules/**"
+                        ).then(
+                            v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
+                            () => { /**/ }
+                        );
+                    }
                 }
+                dirs = newDirs;
             }
-            catch { /**/ }
+            catch {
+                vscode.window.showErrorMessage(
+                    "Cannot find or read the config file"
+                );
+                compile.onSave = [];
+                dirs = [];
+            }
         }
     });
 
@@ -166,7 +165,10 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
                 dirs = newDirs;
             }
-            catch { /**/ }
+            catch {
+                compile.onSave = [];
+                dirs = [];
+            }
         }
         const saveConfig = compile.onSave.find(v => v.input.toString() === e.uri.toString());
         if (saveConfig) {
@@ -193,6 +195,82 @@ export async function activate(context: vscode.ExtensionContext) {
             );
             vscode.workspace.applyEdit(workspaceEdit);
         }
+    });
+
+    vscode.workspace.onDidCreateFiles(created => {
+        created.files.forEach(async e => {
+            if (e.toString() === configUri.toString()) {
+                const newConfig: any = {};
+                try {
+                    const content = JSON.parse(
+                        uint8ArrayToString(
+                            await vscode.workspace.fs.readFile(configUri)
+                        )
+                    );
+                    if (content?.compile?.onSave?.length > 0) {
+                        compile.onSave = content.compile.onSave.map((v: any) => ({
+                            input: vscode.Uri.joinPath(
+                                workspaceRootUri, 
+                                v.input
+                            ),
+                            output: vscode.Uri.joinPath(
+                                workspaceRootUri, 
+                                v.output
+                            ),
+                            entrypoints: v.entrypoints
+                        }));
+                    }
+                    if (content.meta) newConfig.meta = content.meta;
+                    if (content.subgraphs) newConfig.subgraphs = content.subgraphs;
+                    client.sendNotification("update-config", JSON.stringify(newConfig));
+    
+                    // find .rains on startup and send them to server for storing in meta store
+                    const newDirs: vscode.Uri[] = [];
+                    if (content.dirs && Array.isArray(content.dirs) && content.dirs.length > 0) {
+                        for (let i = 0; i < content.dirs.length; i++) {
+                            const dir = vscode.Uri.joinPath(workspaceRootUri, content.dirs[i]);
+                            newDirs.push(dir);
+                            if (!dirs.find(v => v.toString() === dir.toString())) {
+                                vscode.workspace.findFiles(
+                                    new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
+                                    "**​/node_modules/**"
+                                ).then(
+                                    v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
+                                    () => { /**/ }
+                                );
+                            }
+                        }
+                    }
+                    else {
+                        const dir = vscode.Uri.joinPath(workspaceRootUri, "./src");
+                        newDirs.push(dir);
+                        if (!dirs.find(v => v.toString() === dir.toString())) {
+                            vscode.workspace.findFiles(
+                                new vscode.RelativePattern(newDirs[newDirs.length - 1], "**/*.rain"), 
+                                "**​/node_modules/**"
+                            ).then(
+                                v => v.forEach(doc => vscode.workspace.openTextDocument(doc)),
+                                () => { /**/ }
+                            );
+                        }
+                    }
+                    dirs = newDirs;
+                }
+                catch {
+                    compile.onSave = [];
+                    dirs = [];
+                }
+            }
+        });
+    });
+
+    vscode.workspace.onDidDeleteFiles(deleted => {
+        deleted.files.forEach(e => {
+            if (e.toString() === configUri.toString()) {
+                compile.onSave = [];
+                dirs = [];
+            }
+        });
     });
 
     // handler for rainlang compiler, send the request to server and logs the result in output channel
@@ -312,7 +390,10 @@ export async function activate(context: vscode.ExtensionContext) {
                     );
                 }
             }
-            catch { /**/ }
+            catch {
+                compile.onSave = [];
+                dirs = [];
+            }
         }
 
     });
