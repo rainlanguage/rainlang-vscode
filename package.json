@@ -5,7 +5,7 @@
   "description": "Rain Protocol language (rainlang) implementation for vscode",
   "author": "Rain Protocol",
   "license": "CAL-1.0",
-  "version": "1.3.8",
+  "version": "2.0.0",
   "private": true,
   "main": "./dist/node/client",
   "browser": "./dist/browser/client",
@@ -40,17 +40,17 @@
   "contributes": {
     "commands": [
       {
-				"command": "rainlang.start",
-				"title": "Start Rain Language Server"
-			},
+        "command": "rainlang.start",
+        "title": "Start Rain Language Server"
+      },
       {
-				"command": "rainlang.stop",
-				"title": "Stop Rain Language Server"
-			},
+        "command": "rainlang.stop",
+        "title": "Stop Rain Language Server"
+      },
       {
-				"command": "rainlang.restart",
-				"title": "Restart Rain Language Server"
-			},
+        "command": "rainlang.restart",
+        "title": "Restart Rain Language Server"
+      },
       {
         "command": "rainlang.compile.all",
         "title": "Rainlang Compile"
