@@ -76,7 +76,7 @@
       }
     },
     "binding": {
-      "match": "(#)([a-zA-Z0-9-_.]+)",
+      "match": "(#)([a-zA-Z0-9-_]+)",
       "captures": {
         "1": {
           "name": "storage.binding.rainlang"

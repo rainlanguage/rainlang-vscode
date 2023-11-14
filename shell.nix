@@ -54,12 +54,16 @@ let
 		npm run lint-fix
 	'';
 
+	web-ext = pkgs.writeShellScriptBin "web-ext" ''
+		npm run web-ext
+	'';
+
 	in
 	pkgs.stdenv.mkDerivation {
 		name = "shell";
 		buildInputs = [
 			pkgs.nixpkgs-fmt
-			pkgs.nodejs-16_x
+			pkgs.nodejs-18_x
 			build
 			build-all
 			build-prod
@@ -69,6 +73,7 @@ let
 			flush-all
 			lint
 			lint-fix
+			web-ext
 		];
 
 		shellHook = ''

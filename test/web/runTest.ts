@@ -13,7 +13,7 @@ import { runTests } from "@vscode/test-web";
 
         // Path to workspace to be opened
         // Passed as 'args'
-        const folderPath = path.resolve(__dirname, "../../fixtures");
+        const folderPath = path.resolve(__dirname, "../../test-workspace");
 
         // Start a web server that serves VSCode in a browser, run the tests
         await runTests({

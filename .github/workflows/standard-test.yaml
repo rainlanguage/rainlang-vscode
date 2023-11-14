@@ -10,10 +10,10 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Install NodeJS v16
+      - name: Install NodeJS v18
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           cache: 'npm'
 
       # Install deps
@@ -31,6 +31,10 @@ jobs:
       # Lint the source code
       - name: Lint
         run: npm run lint
+
+      # install playwright
+      - name: Install Playwright
+        run: npx playwright install
 
       # Run the desktop tests using headless setup
       - name: Desktop Extension Test
