@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as assert from "assert";
-import { getDocUri, activate, sleep } from "./utils";
+import { getDocUri, activate } from "./utils";
 
 
 async function testCompletion(

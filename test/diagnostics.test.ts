@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as assert from "assert";
-import { getDocUri, activate, toRange, sleep } from "./utils";
+import { getDocUri, activate, toRange } from "./utils";
 
 
 async function testDiagnostics(docUri: vscode.Uri, expectedDiagnostics: vscode.Diagnostic[]) {

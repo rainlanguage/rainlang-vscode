@@ -9,7 +9,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceRoot}",
-				"${workspaceFolder}/dev-workspace"		// workspace to open automatically
+				"${workspaceFolder}/test/workspace"		// workspace to open automatically
 			],
 			"outFiles": ["${workspaceRoot}/dist/node/**/*.js"],
 			"autoAttachChildProcesses": true,
@@ -27,7 +27,7 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceRoot}", 
 				"--extensionDevelopmentKind=web",
-				"${workspaceFolder}/dev-workspace"		// workspace to open automatically
+				"${workspaceFolder}/test/workspace"		// workspace to open automatically
 			],
 			"outFiles": ["${workspaceRoot}/dist/browser/**/*.js"],
 			"preLaunchTask": {
@@ -42,38 +42,46 @@
 			"port": 6009,
 			"restart": true,
 			"outFiles": [
-				"${workspaceRoot}/server/dist/**/*.js"
+				"${workspaceRoot}/dist/browser/**/*.js"
 			]
 		},
-		{
-			// desktop e2e test runner
-			"name": "E2E Desktop Test",
-			"type": "extensionHost",
-			"autoAttachChildProcesses": true,
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}",
-				"--extensionTestsPath=${workspaceRoot}/test/out/desktop/index",
-				"${workspaceRoot}/fixtures"		// workspace to open automatically
-			],
-			"outFiles": ["${workspaceRoot}/test/out/desktop/**/*.js"]
-		},
-		{
-			// web e2e test runner 
-			"name": "E2E Web Test",
-			"type": "extensionHost",
-			"debugWebWorkerHost": true,
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}",
-				"--extensionTestsPath=${workspaceRoot}/test/out/web/index",
-				"--extensionDevelopmentKind=web",
-				"${workspaceRoot}/fixtures"		// workspace to open automatically
-			],
-			"outFiles": ["${workspaceRoot}/test/out/web/**/*.js"]
-		}
+	// 	{
+	// 		// desktop e2e test runner
+	// 		"name": "E2E Desktop Test",
+	// 		"type": "extensionHost",
+	// 		"autoAttachChildProcesses": true,
+	// 		"request": "launch",
+	// 		"runtimeExecutable": "${execPath}",
+	// 		"args": [
+	// 			"--extensionDevelopmentPath=${workspaceRoot}",
+	// 			"--extensionTestsPath=${workspaceRoot}/test/out/desktop/index",
+	// 			"${workspaceRoot}/test-workspace"		// workspace to open automatically
+	// 		],
+	// 		"outFiles": ["${workspaceRoot}/test/out/desktop/**/*.js"],
+	// 		"preLaunchTask": {
+	// 			"type": "npm",
+	// 			"script": "build-node-dev"
+	// 		}
+	// 	},
+	// 	{
+	// 		// web e2e test runner 
+	// 		"name": "E2E Web Test",
+	// 		"type": "extensionHost",
+	// 		"debugWebWorkerHost": true,
+	// 		"request": "launch",
+	// 		"runtimeExecutable": "${execPath}",
+	// 		"args": [
+	// 			"--extensionDevelopmentPath=${workspaceRoot}",
+	// 			"--extensionTestsPath=${workspaceRoot}/test/out/web/index",
+	// 			"--extensionDevelopmentKind=web",
+	// 			"${workspaceRoot}/test-workspace"		// workspace to open automatically
+	// 		],
+	// 		"outFiles": ["${workspaceRoot}/test/out/web/**/*.js"],
+	// 		"preLaunchTask": {
+	// 			"type": "npm",
+	// 			"script": "build-browser-dev"
+	// 		}
+	// 	}
 	],
 	"compounds": [
 		{

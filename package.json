@@ -40,8 +40,24 @@
   "contributes": {
     "commands": [
       {
-        "command": "rainlang.compile",
+				"command": "rainlang.start",
+				"title": "Start Rain Language Server"
+			},
+      {
+				"command": "rainlang.stop",
+				"title": "Stop Rain Language Server"
+			},
+      {
+				"command": "rainlang.restart",
+				"title": "Restart Rain Language Server"
+			},
+      {
+        "command": "rainlang.compile.all",
         "title": "Rainlang Compile"
+      },
+      {
+        "command": "rainlang.compile",
+        "title": "Rainlang Compile Current"
       }
     ],
     "menus": {
@@ -49,6 +65,10 @@
         {
           "when": "resourceLangId == rainlang",
           "command": "rainlang.compile"
+        },
+        {
+          "when": "resourceLangId == rainlang",
+          "command": "rainlang.compile.all"
         }
       ]
     },
@@ -75,8 +95,8 @@
     ],
     "jsonValidation": [
       {
-        "fileMatch": "*.rain.json",
-        "url": "./rain.config.schema.json"
+        "fileMatch": "*rainconfig.json",
+        "url": "./rainconfig.schema.json"
       }
     ],
     "configurationDefaults": {
@@ -106,13 +126,6 @@
       "type": "object",
       "title": "Rain Language",
       "properties": {
-        "rainlang.config": {
-          "scope": "resource",
-          "title": "Rain Config Path",
-          "description": "Path to the rain config file (must end with *.rain.json) in case 'config.rain.json' doesn't exist in current workspace root directory, it is recommended that the config file be placed at root directory of workspace with the name 'config.rain.json', so only use this option if that not possible",
-          "type": "string",
-          "pattern": "(\\.\\/|\\.\\.\\/|[^]*\\/)*[^]+\\.rain.json$"
-        },
         "rainlang.trace.server": {
           "scope": "window",
           "type": "string",
@@ -172,7 +185,8 @@
     "compile-test": "rimraf ./test/out && tsc -b ./test && webpack -c ./test/webpack.config.js",
     "test": "npm run build && npm run compile-test && node ./test/out/desktop/runTest.js && node ./test/out/web/runTest.js",
     "test-web": "npm run build && npm run compile-test && node ./test/out/web/runTest.js",
-    "test-desktop": "npm run build && npm run compile-test && node ./test/out/desktop/runTest.js"
+    "test-desktop": "npm run build && npm run compile-test && node ./test/out/desktop/runTest.js",
+    "web-ext": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ./test/workspace"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",

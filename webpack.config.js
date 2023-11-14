@@ -27,7 +27,10 @@ const node = (prod) => {
         },
         resolve: {
             mainFields: ["module", "main"],
-            extensions: [".ts", ".js"]
+            extensions: [".ts", ".js"],
+            fallback: {
+                path: require.resolve("path-browserify")
+            },
         },
         module: {
             rules: [

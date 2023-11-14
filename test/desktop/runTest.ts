@@ -13,7 +13,7 @@ import { runTests } from "@vscode/test-electron";
 
         // Path to workspace to be opened
         // Passed as 'args'
-        const workspacePath = path.resolve(__dirname, "../../fixtures");
+        const workspacePath = path.resolve(__dirname, "../../test-workspace");
 
         // Download VS Code, unzip it and run the integration test
         await runTests({ 

@@ -2,7 +2,8 @@ import {
     Meta, 
     Range,
     Compile, 
-    ErrorCode, 
+    ErrorCode,
+    keccak256,  
     RainDocument,
     HASH_PATTERN, 
     TextDocument, 
@@ -17,8 +18,7 @@ import {
     InitializeResult,
     TextDocumentSyncKind,
     BrowserMessageReader, 
-    BrowserMessageWriter,  
-    SemanticTokensParams, 
+    BrowserMessageWriter, 
     DidChangeConfigurationNotification 
 } from "vscode-languageserver/browser";
 
@@ -53,15 +53,6 @@ connection.onInitialize(async(params: InitializeParams) => {
     hasWorkspaceFolderCapability = !!(
         clientCapabilities.workspace && !!clientCapabilities.workspace.workspaceFolders
     );
-
-    // // add subgraphs to metaStore
-    // if (params.initializationOptions) {
-    //     const settings = JSON.parse(params.initializationOptions);
-    //     if (settings.localMetas) for (const hash of Object.keys(settings.localMetas)) {
-    //         await metaStore.update(hash, settings.localMetas[hash]);
-    //     }
-    //     if (settings.subgraphs) metaStore.addSubgraphs(settings.subgraphs);
-    // }
 
     langServices = getRainLanguageServices({
         clientCapabilities,
@@ -113,52 +104,44 @@ connection.onInitialized(() => {
     connection.sendNotification("request-config", workspaceRootUri);
 });
 
-// // store local rain documents to the meta store
-// connection.onNotification("watched-rain-documents", async e => {
-//     for (let i = 0; i < e.length; i++) if (e[i][0].endsWith(".rain")) {
-//         await metaStore.storeDotrain(e[i][1], e[i][0]);
-//         const texDocument = TextDocument.create(e[i][0], "rainlang", 0, e[i][1]);
-//         const rainDocument = new RainDocument(texDocument, metaStore);
-//         (rainDocument as any)._shouldSearch = false;
-//         await rainDocument.parse();
-//         hashMap.set(
-//             texDocument.uri, 
-//             rainDocument.imports.filter(
-//                 v => HASH_PATTERN.test(v.hash)
-//             ).map(
-//                 v => ({
-//                     hash: v.hash.toLowerCase(), 
-//                     range: Range.create(
-//                         texDocument.positionAt(v.hashPosition[0]),
-//                         texDocument.positionAt(v.hashPosition[1] + 1)
-//                     ) 
-//                 })
-//             )
-//         );
-//     }
-// });
-
 // update meta store when config has changed and revalidate documents
-connection.onNotification("update-config", async e => {
+connection.onNotification("update-meta-store", async e => {
     try {
-        const _conf = JSON.parse(e);
-        if (_conf?.meta) for (const hash in _conf.meta) {
-            await metaStore.update(hash, _conf.meta[hash]);
-        }
-        if (_conf?.subgraphs) await metaStore.addSubgraphs(_conf.subgraphs);
-        documents.all().forEach(v => { validate(v, v.getText(), v.version); });
+        for (const d of e[1]) metaStore.update(keccak256(d), d);
+        for (let i = 0; i < e[2].length; i++) metaStore.update(e[2][i][0], e[2][i][1]);
+        metaStore.addSubgraphs(e[0]);
+        // documents.all().forEach(v => validate(v, v.getText(), v.version));
     }
     catch { /**/ }
+});
+
+connection.onNotification("watch-dotrain", async e => {
+    metaStore.storeDotrain(e[1], e[0]);
+    setHashMap(e[1], e[0]);
+});
+
+connection.onNotification("unwatch-all", () => {
+    hashMap.clear();
+    Object.keys(metaStore.dotrainCache).forEach(v => {
+        metaStore.deleteDotrain(v);
+    });
+});
+
+connection.onNotification("reval-all", () => {
+    documents.all().forEach(v => validate(v, v.getText(), v.version));
 });
 
 // executes rain compile command
 connection.onExecuteCommand(async e => {
     if (e.command === "_compile") {
         const langId = e.arguments![0];
-        const uri = e.arguments![1];
+        const uriOrFile = e.arguments![1];
         const expKeys = JSON.parse(e.arguments![2]);
+        const isUri = e.arguments![3] === "uri";
         if (langId === "rainlang") {
-            const _td = documents.get(uri);
+            let _td;
+            if (isUri) _td = documents.get(uriOrFile);
+            else _td = uriOrFile;
             if (_td) {
                 try {
                     return await Compile.RainDocument(_td, expKeys, {metaStore});
@@ -173,25 +156,9 @@ connection.onExecuteCommand(async e => {
     }
 });
 
-// connection.onDidChangeConfiguration(async() => {
-//     const settings = await getSetting();
-//     if (settings?.localMetas) {
-//         for (const hash of Object.keys(settings.localMetas)) {
-//             await metaStore.update(hash, settings.localMetas[hash]);
-//         }
-//     }
-//     if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
-//     documents.all().forEach(async(v) => {
-//         if (v.languageId === "rainlang") {
-//             validate(v);
-//         }
-//     });
-// });
-
 documents.onDidOpen(v => {
     const text = v.document.getText();
     validate(v.document, text, v.document.version);
-    metaStore.storeDotrain(text, v.document.uri);
 });
 
 documents.onDidClose(v => {
@@ -203,38 +170,43 @@ documents.onDidChangeContent(change => {
 });
 
 documents.onDidSave(e => {
-    if (e.document.languageId === "rainlang") metaStore.storeDotrain(
-        e.document.getText(), e.document.uri
-    ).then(({ newHash, oldHash }) => {
-        const changes: { [uri: string]: TextEdit[] } = {};
-        if (oldHash !== undefined) {
-            hashMap.forEach((imports, uri) => {
-                if (uri !== e.document.uri) {
-                    let imp;
-                    if (imp = imports.find(e => e.hash.toLowerCase() === oldHash.toLowerCase())) {
-                        changes[uri] = [{ range: imp.range, newText: newHash }];
+    if (e.document.languageId === "rainlang" && hashMap.has(e.document.uri)) {
+        setHashMap(e.document.getText(), e.document.uri);
+        metaStore.storeDotrain(
+            e.document.getText(), e.document.uri
+        ).then(({ newHash, oldHash }) => {
+            if (oldHash !== undefined) {
+                const changes: { [uri: string]: TextEdit[] } = {};
+                hashMap.forEach((imports, uri) => {
+                    if (uri !== e.document.uri) {
+                        const imp = imports.find(
+                            e => e.hash.toLowerCase() === oldHash.toLowerCase()
+                        );
+                        if (imp ) changes[uri] = [{ range: imp.range, newText: newHash }];
                     }
-                }
-            });
-            if (Object.keys(changes).length > 0) connection.workspace.applyEdit({ changes });
-        }
-    });
-});
-
-connection.workspace.onDidDeleteFiles(deleted => {
-    deleted.files.forEach(v => {
-        if (v.uri.endsWith(".rain")) {
-            const hash = metaStore.dotrainCache[v.uri];
-            metaStore.deleteDotrain(v.uri);
-            hashMap.delete(v.uri);
-            if (hash !== undefined) hashMap.forEach((imports, uri) => {
-                if (imports.find(e => e.hash.toLowerCase() === hash.toLowerCase())) {
-                    const doc = documents.get(uri);
-                    if (doc) validate(doc, doc.getText(), doc.version);
-                }
-            });
-        }
-    });
+                });
+                if (Object.keys(changes).length > 0) connection.workspace.applyEdit(
+                    { changes }
+                ).then(
+                    () => {
+                        for (const uri in changes) {
+                            const doc = documents.get(uri);
+                            if (doc !== undefined) {
+                                const doc = documents.get(uri);
+                                if (doc !== undefined) setHashMap(doc.getText(), uri);
+                            }
+                        }
+                    },
+                    () => {
+                        for (const uri in changes) {
+                            const doc = documents.get(uri);
+                            if (doc !== undefined) setHashMap(doc.getText(), uri);
+                        }
+                    }
+                );
+            }
+        });
+    }
 });
 
 connection.onCompletion(params => {
@@ -258,7 +230,7 @@ connection.onHover(params => {
 });
 
 // provide semantic token highlighting
-connection.languages.semanticTokens.on(async(e: SemanticTokensParams) => {
+connection.languages.semanticTokens.on(async e => {
     let data: number[];
     const _td = documents.get(e.textDocument.uri);
     if (_td && _td.languageId === "rainlang") {
@@ -368,32 +340,36 @@ async function getSetting() {
 // validate a document
 async function validate(textDocument: TextDocument, text: string, version: number) {
     if (textDocument.languageId === "rainlang") {
-        try {
-            const td = TextDocument.create(textDocument.uri, "rainlang", 0, text);
-            const rainDocument = await RainDocument.create(td, metaStore);
-            const diagnostics = await langServices.doValidate(rainDocument);
-            // check version of the text document before sending the diagnostics to VSCode
-            if (version === textDocument.version) {
-                connection.sendDiagnostics({ 
-                    uri: textDocument.uri, 
-                    diagnostics
-                });
-                hashMap.set(
-                    textDocument.uri, 
-                    rainDocument.imports.filter(
-                        v => HASH_PATTERN.test(v.hash)
-                    ).map(
-                        v => ({
-                            hash: v.hash.toLowerCase(), 
-                            range: Range.create(
-                                td.positionAt(v.hashPosition[0]),
-                                td.positionAt(v.hashPosition[1] + 1)
-                            ) 
-                        })
-                    )
-                );
-            }
-        }
-        catch { /**/ }
+        const td = TextDocument.create(textDocument.uri, "rainlang", 0, text);
+        langServices.doValidate(td).then(
+            diagnostics => {
+                if (version === textDocument.version) {
+                    connection.sendDiagnostics({ 
+                        uri: textDocument.uri, 
+                        diagnostics
+                    });
+                }
+            },
+            () => { /**/ }
+        );
     }
+}
+
+async function setHashMap(text: string, uri: string) {
+    const _td = TextDocument.create(uri, "rainlang", 0, text);
+    const _rd = new RainDocument(_td, metaStore);
+    (_rd as any)._shouldSearch = false;
+    _rd.parse().then(
+        () => hashMap.set(
+            uri, 
+            _rd.imports.filter(v => HASH_PATTERN.test(v.hash)).map(v => ({
+                hash: v.hash.toLowerCase(), 
+                range: Range.create(
+                    _td.positionAt(v.hashPosition[0]),
+                    _td.positionAt(v.hashPosition[1] + 1)
+                ) 
+            }))
+        ),
+        () => hashMap.set(uri, [])
+    );   
 }

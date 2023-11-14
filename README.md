@@ -7,12 +7,12 @@ This extension provides the following language features:
 - Hovers
 - Syntax Highlighting
 - Semantic Syntax Highlighting
-- .rain files watch and auto-hash
+- rainconfig tips (schema)
+- .rain files watch
 - .rain Compilation
 - .rain files auto-compile on save
-- access local .rain files from completion suggestions on hash import
-- store local meta hash/content
-- include custom subgraphs for meta sourcing
+- access local .rain files from completion suggestions applied as hash
+- control extension from statusbar
 
 It also includes an End-to-End test.
 <br>
@@ -21,24 +21,27 @@ It also includes an End-to-End test.
 
 Rain Language server works for rain files with `.rain` extentions, example:
 ```rainlang
-@ dispair   0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f
-@ contract-meta 0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
+@ dispair   0x78fd1edb0bdb928db6015990fecafbb964b44692e2d435693062dd4efc6254dd
+@ contmeta  0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
   'calling-context new-name /* renaming "calling-context" to "new-name" */
-  base ! /* eliding an item from this imported items */
+  base ! /* eliding an item from the items in the import */
 
+/* import a .rain meta to root */
+@ 0xc509e3a2bd58cb0062fb80c6d9f2e40cb815694f5733c3041c2c620a46f6ad94
+  elided 12 /* rebind the elided binding in the import */
+  'elided twelve /* and then rename to avoid shadowing the elided binding below */
+  'value const /* rename the value so it wont shadow the constant binding below */
 
-#const-value
+#value
   1e13
 
-#elided-fragment
+#elided
   ! this is elided, rebind before using
 
 #main
-  _: add(1 2 dispair.sub(const-value 2)),
-  _: mul(3 4 contract-meta.new-name<'fn>() infinity .const-value);
-
-#fn
-  _: .dispair.add(1 2);
+  _: twelve,
+  _: .my-address,
+  _: int-add(.dispair.int-max(twelve .value infinity) .const .contmeta.new-name<1>());
 ```
 
 as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
@@ -48,59 +51,61 @@ const myExp = rainlang`_: add(1 2)`
 ```
 <br>
 
-## Configurations
-Rainlang configuration (if needed) should be set in json file.
-- It is strongly recommended to use `config.rain.json` file name and put it in the root directory of working workspace as that is the default place and filename this extension looks for to read configuration from, so by doing this no extra configuration is required.
-- File name ending with `*.rain.json` will automatically apply the rain config schema on the file.
-- It is still possible to choose any other name or directory for the config file, but the path of that should be set in vscode `settings.json` in `rainlang.config` key.
+## rainconfig
+rainconfig specifies the configuration details for compiler and language server and should be placed in the root directory of working workspace named `rainconfig.json` or `.rainconfig.json`, an schema is applied to the rainconfig if this extension is active. 
+bellow is the list of rainconfig fields (all fields are optional):
+- `src`: Specifies list of .rain source files mappings for compilation, where specified .rain input files will get compiled and results written into output json file.
+- `include`: Specifies a list of directories (files/folders) to be included in watch. 'src' files are included by default and folders will be watched recursively for .rain files.
+- `subgraphs`: Specifies additional subgraph endpoints to search for a meta for a given hash, [default rain subgraphs](https://github.com/rainprotocol/meta/blob/master/src/rainSubgraphs.ts) are always included.
+- `meta`: Specifies local meta files paths or an object with path and hash (this will result in hash explicit validation) as binary or utf8 encoded hex strings starting with 0x.
 
-### Config file content
-Configuration file contents that are utilized (all are optional):
-- `dirs`: Array of folder paths that contain your .rain files, default is `./src`.
-- `subgraphs`: By default rainlang will search through hardcoded [subgraphs](https://github.com/rainprotocol/meta/blob/master/src/rainSubgraphs.ts) to find specified contents of a meta hash, however, you can add more subgraph endpoint URLs.
-- `meta`: It is possible to set local metas by adding key/value pairs of meta hash and meta content bytes as hex string
-- `compile.onSave`: Mappings (array) of input .rain files paths and entrypoints (bindings names) that should get compiled and written to output json files paths when an action (e.g. save) is triggered, 
-
-an example of a config file content:
+example:
 ```json
 {
-  "dirs": ["dir1/path", "dir2/path"],
-  "subgraphs": [
-    "https://api.thegraph.com/subgraphs/name/example1/example1",
-    "https://api.thegraph.com/subgraphs/name/example2/example2"
+  "include": ["./path/to/folder", "./path/to/another-folder"],
+  "src": [
+    {
+      "input": "./path/to/file1.rain",
+      "output": "./path/to/compiled-file1.json",
+      "entrypoints": ["entrypoint1", "entrypoint2"]
+    },
+    {
+      "input": "./path/to/file2.rain",
+      "output": "./path/to/compiled-file2.json",
+      "entrypoints": ["entrypoint1", "entrypoint2"]
+    }
   ],
-  "compile": {
-    "onSave": [
+  "meta": {
+    "binary": [
+      "./path/to/binary-meta", 
       {
-        "input": "./path/to/input1.rain",
-        "output": "./path/to/compiledOutput1.json",
-        "entrypoints": [
-          "exp-1", 
-          "exp-2"
-        ]
-      },
+        "path": "./path/to/another-binary-meta",
+        "hash": "0x123456789abcdef..."
+      }
+    ],
+    "hex": [
+      "./path/to/hex-meta", 
       {
-        "input": "./path/to/input2.rain",
-        "output": "./path/to/compiledOutput2.json",
-        "entrypoints": [
-          "main"
-        ]
+        "path": "./path/to/another-hex-meta",
+        "hash": "0x123456789abcdef..."
       }
     ]
   },
-  "meta": {
-    "0xe4c000f3728f30e612b34e401529ce5266061cc1233dc54a6a89524929571d8f": "0x123456...",
-    "0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c": "0xabcdef..."
-  },
+  "subgraphs": [
+    "https://subgraph1-uril",
+    "https://subgraph2-uril",
+    "https://subgraph3-uril"
+  ]
 }
 ```
-any other properties can be added to the config file, but wont be utilized by this extension.
 <br>
 
-## Compilation
-
-Use `Rainlang Compile` command accessible from Command Palette or from editor's context menu (right-click) to compile the selected rainlang document and get the ExpressionConfig.
-Auto compilation mappings can also be set in the config file for specified file to be compiled on save to specified destinations.
+## Extension Commands
+- `Rainlang Compile` compiles the specified `src` files in the rainconfig to their specified output paths, accessible from Command Palette or from editor's context menu (right-click).
+- `Rainlang Compile Current` accessible from Command Palette or from editor's context menu (right-click) to compile the selected rainlang document and get the ExpressionConfig.
+- `Start Rain Language Server` starts the Rain Language Server if it is not running. accessible from Command Palette or statusbar.
+- `Stop Rain Language Server` stops the Rain Language Server if it is running. accessible from Command Palette or statusbar.
+- `Restart Rain Language Server` restarts the Rain Language Server if it is running. accessible from Command Palette or statusbar.
 <br>
 
 ## Developers Guide
@@ -138,9 +143,10 @@ Auto compilation mappings can also be set in the config file for specified file 
 │     ├──── desktop
 │     │     ├──── index.ts                      // Desktop extention test entry point
 │     │     └──── runTest.ts                    // Desktop extention e2e test runner
+│     ├──── workspace                           // Extension Development Host sample workspace
 ├──── docs                                      // Documents (images, icons, ...)
-├──── dev-workspace                             // Extension Development Host workspace
 ├──── package.json                              // The extension manifest
 ├──── rain-language-configuration.json          // Rain language configurations
+├──── rainconfig.schema.json                    // rainconfig schema
 └──── shell.nix                                 // Nix shell configuration
 ```

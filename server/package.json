@@ -1,6 +1,6 @@
 {
 	"name": "rainlang-vscode-server",
-	"description": "Rain language server implementation for vscode in node.",
+	"description": "Rain language server implementation for vscode.",
 	"version": "0.0.1",
 	"author": "Rain Protocol",
 	"license": "CAL-1.0",
@@ -15,7 +15,7 @@
 		"url": "https://github.com/rainprotocol/rainlang-vscode/issues"
 	},
 	"dependencies": {
-		"@rainprotocol/rainlang": "github:rainprotocol/rainlang#0d049f28279f15159daf7a948146a68157710531",
+		"@rainprotocol/rainlang": "^5.1.0",
 		"vscode-languageserver": "^8.1.0"
 	},
 	"devDependencies": {

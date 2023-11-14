@@ -1,0 +1,173 @@
+{
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "include": {
+      "type": "array",
+      "description": "Specifies a list of directories (files/folders) to be included in watch. 'src' files are included by default and folders will be watched recursively for .rain files.",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "title": "File/Folder Directory"
+      }
+    },
+    "src": {
+      "type": "array",
+      "title": "Source List (Compilation Mappings)",
+      "description": "Specifies list of .rain source files mappings for compilation, where specified .rain input files will get compiled and results written into output json file.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "title": "Mapping",
+        "description": "A single mappping item, all relative paths must be relative to current workspace root directory.",
+        "required": ["input", "output", "entrypoints"],
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "type": "string",
+            "title": "Input File Path",
+            "description": "Path to a .rain file as source to read from.",
+            "pattern": ".rain$"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output File Path",
+            "description": "Path to a .json file as output to write results into."
+          },
+          "entrypoints": {
+            "type": "array",
+            "title": "Entrypoints",
+            "description": "Array of entrypoints to compile.",
+            "items": {
+              "type": "string",
+              "title": "Entrypoint",
+              "pattern": "^[a-z][0-9a-z-]*$"
+            }
+          }
+        }
+      },
+      "examples": [
+        [{
+          "input": "./path/to/input.rain",
+          "output": "./path/to/output.json",
+          "entrypoints": ["main", "fn"]
+        }]
+      ]
+    },
+    "subgraphs": {
+      "description": "Specifies additional subgraph endpoints to search for a meta for a given hash, default rain subgraphs are always included.",
+      "markdownDescription": "Specifies additional subgraph endpoints to search for a meta for a given hash, [default rain subgraphs](https://github.com/rainprotocol/meta/blob/master/src/rainSubgraphs.ts) are always included.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^https:|^wss:",
+        "minItems": 1
+      },
+      "examples": [
+        ["https://subgraph1-endpoint-url", "https://subgraph2-endpoint-url"]
+      ]
+    },
+    "meta": {
+      "title": "Local Meta",
+      "description": "Spcifies local meta files paths or an object with path and hash (this will result in hash explicit validation) as binary or utf8 encoded hex strings starting with 0x.",
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "binary": {
+          "title": "Local Binary Meta",
+          "description": "List of binary meta files paths (or object of path and hash).",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "The binary meta path."
+              },
+              {
+                "type": "object",
+                "description": "Binary meta path with hash",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path of the binary meta file."
+                  },
+                  "hash" : {
+                    "type": "string",
+                    "description": "The hash of the meta, will be explicitly checked against the data"
+                  }
+                },
+                "required": ["path", "hash"]
+              }
+            ]
+          },
+          "examples": [
+            [
+              "path/to/binary-meta",
+              {
+                "path": "path/to/another-binary-meta",
+                "hash": "0x1234567890abcdef..."
+              }
+            ]
+          ]
+        },
+        "hex": {
+          "title": "Local Hex String Meta",
+          "description": "List of utf8 encoded hex string starting with 0x meta files paths (or object of path and hash).",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "The hex meta path,"
+              },
+              {
+                "type": "object",
+                "description": "Hex meta path with hash",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path of the hex meta file."
+                  },
+                  "hash" : {
+                    "type": "string",
+                    "description": "The hash of the meta, will be explicitly checked against the data."
+                  }
+                },
+                "required": ["path", "hash"]
+              }
+            ]
+          },
+          "examples": [
+            [
+              "path/to/hex-meta",
+              {
+                "path": "path/to/another-hex-meta",
+                "hash": "0x1234567890abcdef..."
+              }
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "binary": [
+            "path/to/binary-meta",
+            {
+              "path": "path/to/another-binary-meta",
+              "hash": "0x1234567890abcdef..."
+            }
+          ],
+          "hex": [
+            "path/to/binary-meta",
+            {
+              "path": "path/to/another-binary-meta",
+              "hash": "0x1234567890abcdef..."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

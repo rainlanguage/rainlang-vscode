@@ -54,6 +54,10 @@ let
 		npm run lint-fix
 	'';
 
+	web-ext = pkgs.writeShellScriptBin "web-ext" ''
+		npm run web-ext
+	'';
+
 	in
 	pkgs.stdenv.mkDerivation {
 		name = "shell";
@@ -69,6 +73,7 @@ let
 			flush-all
 			lint
 			lint-fix
+			web-ext
 		];
 
 		shellHook = ''
