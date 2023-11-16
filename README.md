@@ -19,7 +19,7 @@ It also includes an End-to-End test.
 
 ## Introduction
 
-Rain Language server works for rain files with `.rain` extentions, example:
+Rain Language server works for rain files with `.rain` extentions (utf8 encoded), example:
 ```rainlang
 @ dispair   0x78fd1edb0bdb928db6015990fecafbb964b44692e2d435693062dd4efc6254dd
 @ contmeta  0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 

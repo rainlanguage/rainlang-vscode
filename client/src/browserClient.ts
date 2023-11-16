@@ -538,12 +538,14 @@ async function sleep(ms: number) {
     );
 }
 
+function stringToUint8Array(text: string): Uint8Array {
+    const encoder = new TextEncoder();
+    return encoder.encode(text);
+}
+
 function uint8ArrayToString(uint8array: Uint8Array): string {
-    let str = "";
-    for (let i = 0; i < uint8array.length; i++) {
-        str = str + String.fromCharCode(uint8array[i]);
-    }
-    return str;
+    const decoder = new TextDecoder();
+    return decoder.decode(uint8array);
 }
 
 function hexlify(data: Uint8Array): string {
