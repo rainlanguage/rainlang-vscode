@@ -52,10 +52,6 @@
         "title": "Restart Rain Language Server"
       },
       {
-        "command": "rainlang.compile.all",
-        "title": "Rainlang Compile"
-      },
-      {
         "command": "rainlang.compile",
         "title": "Rainlang Compile Current"
       }
@@ -65,10 +61,6 @@
         {
           "when": "resourceLangId == rainlang",
           "command": "rainlang.compile"
-        },
-        {
-          "when": "resourceLangId == rainlang",
-          "command": "rainlang.compile.all"
         }
       ]
     },

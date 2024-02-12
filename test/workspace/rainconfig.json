@@ -11,17 +11,20 @@
     "https://subgraph1-endpoint",
     "https://subgraph2-endpoint"
   ],
-  "meta": {
-    "hex": [
-      "./meta/deployer.txt",
-      {
-        "path": "./meta/deployer-constructor.txt",
-        "hash": "0x11b9c1d11469bbe1034986e499732102eb817ae1ca851895a3d2ff2ea3161b84"
+  "meta": [
+    {
+      "hex": "./meta/caller.txt"
+    }
+  ],
+  "deployers": {
+    "0x78fd1edb0bdb928db6015990fecafbb964b44692e2d435693062dd4efc6254dd": {
+      "constructionMeta": {
+        "binary": "./meta/construction.meta"
       },
-      {
-        "path": "./meta/caller.txt",
-        "hash": "0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c"
-      }
-    ] 
+      "expressionDeployer": "./meta/deployer.json",
+      "parser": "./meta/parser.json",
+      "store": "./meta/store.json",
+      "interpreter": "./meta/interpreter.json"
+    }
   }
 }

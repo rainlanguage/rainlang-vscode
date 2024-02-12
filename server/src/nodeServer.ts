@@ -1,15 +1,16 @@
+import { TextDocument } from "vscode-languageserver-textdocument";
 import { 
-    Meta, 
-    Range,
-    Compile, 
-    ErrorCode, 
+    Range, 
+    hexlify, 
+    arrayify, 
+    MetaStore, 
     keccak256, 
     RainDocument,
-    HASH_PATTERN, 
-    TextDocument, 
+    TextDocumentItem, 
     RainLanguageServices,
-    getRainLanguageServices 
-} from "@rainprotocol/rainlang";
+    DeployerQueryResponse,
+    getDeployedBytecodeMetaHash 
+} from "@rainlanguage/dotrain";
 import {
     TextEdit, 
     TextDocuments,
@@ -17,9 +18,10 @@ import {
     ProposedFeatures,
     InitializeResult,
     TextDocumentSyncKind, 
-    DidChangeConfigurationNotification 
+    DidChangeConfigurationNotification
 } from "vscode-languageserver/node";
 
+let startupReady = false;
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -31,7 +33,7 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 // map of rain documents import hashs for the purpose of auto update the local import hashs
 const hashMap: Map<string, { hash: string; range: Range }[]> = new Map();
 
-const metaStore = new Meta.Store();
+const metaStore = new MetaStore();
 let langServices: RainLanguageServices;
 
 let hasWorkspaceFolderCapability = false;
@@ -49,11 +51,8 @@ connection.onInitialize(async(params) => {
         clientCapabilities.workspace && !!clientCapabilities.workspace.workspaceFolders
     );
 
-    langServices = getRainLanguageServices({
-        clientCapabilities,
-        metaStore,
-        noMetaSearch: true
-    });
+    // initiate the language services
+    langServices = new RainLanguageServices(metaStore);
 
     const result: InitializeResult = {
         capabilities: {
@@ -71,7 +70,7 @@ connection.onInitialize(async(params) => {
             },
             semanticTokensProvider: {
                 legend: {
-                    tokenTypes: ["keyword", "class", "interface", "enum", "function", "variable"],
+                    tokenTypes: ["keyword", "class"],
                     tokenModifiers: ["declaration", "readonly"]
                 },
                 full: true
@@ -103,28 +102,61 @@ connection.onInitialized(() => {
 // update meta store when config has changed and revalidate documents
 connection.onNotification("update-meta-store", async e => {
     try {
-        for (const d of e[1]) metaStore.update(keccak256(d), d);
-        for (let i = 0; i < e[2].length; i++) metaStore.update(e[2][i][0], e[2][i][1]);
+        for (const d of e[1]) {
+            try {
+                if (typeof d === "string") {
+                    const data = arrayify(d);
+                    metaStore.updateWith(keccak256(data), data);
+                } else {
+                    metaStore.updateWith(keccak256(d), d);
+                }
+            }
+            catch { /**/ }
+        }
+        for (let i = 0; i < e[2].length; i++) {
+            try {
+                const deployerDetails = e[2][i];
+                let metaBytes;
+                if (typeof deployerDetails[1] === "string") {
+                    metaBytes = arrayify(deployerDetails[1]);
+                } else {
+                    metaBytes = deployerDetails[0];
+                }
+                const deployer: DeployerQueryResponse = {
+                    txHash: arrayify(deployerDetails[0]),
+                    bytecodeMetaHash: getDeployedBytecodeMetaHash(deployerDetails[3]),
+                    metaHash: keccak256(metaBytes),
+                    metaBytes,
+                    bytecode: arrayify(deployerDetails[2]),
+                    parser: arrayify(deployerDetails[4]),
+                    store: arrayify(deployerDetails[5]),
+                    interpreter: arrayify(deployerDetails[6])
+                };
+                metaStore.setDeployer(deployer);
+            }
+            catch { /**/ }
+        }
         metaStore.addSubgraphs(e[0]);
         // documents.all().forEach(v => validate(v, v.getText(), v.version));
     }
     catch { /**/ }
+    startupReady = true;
 });
 
 connection.onNotification("watch-dotrain", async e => {
-    metaStore.storeDotrain(e[1], e[0]);
+    metaStore.setDotrain(e[1], e[0], false);
     setHashMap(e[1], e[0]);
 });
 
 connection.onNotification("unwatch-all", () => {
     hashMap.clear();
     Object.keys(metaStore.dotrainCache).forEach(v => {
-        metaStore.deleteDotrain(v);
+        metaStore.deleteDotrain(v, false);
     });
 });
 
 connection.onNotification("reval-all", () => {
-    documents.all().forEach(v => validate(v, v.getText(), v.version));
+    documents.all().forEach(v => validate(v.uri, v.getText(), v.version, v.languageId));
 });
 
 // executes rain compile command
@@ -136,11 +168,11 @@ connection.onExecuteCommand(async e => {
         const isUri = e.arguments![3] === "uri";
         if (langId === "rainlang") {
             let _td;
-            if (isUri) _td = documents.get(uriOrFile);
+            if (isUri) _td = documents.get(uriOrFile)?.getText();
             else _td = uriOrFile;
             if (_td) {
                 try {
-                    return await Compile.RainDocument(_td, expKeys, {metaStore});
+                    return await RainDocument.compileTextAsync(_td, expKeys, metaStore);
                 }
                 catch (err) {
                     return err;
@@ -152,73 +184,65 @@ connection.onExecuteCommand(async e => {
     }
 });
 
-// connection.onDidChangeConfiguration(async() => {
-//     const settings = await getSetting();
-//     if (settings?.localMetas) {
-//         for (const hash of Object.keys(settings.localMetas)) {
-//             await metaStore.update(hash, settings.localMetas[hash]);
-//         }
-//     }
-//     if (settings?.subgraphs) await metaStore.addSubgraphs(settings.subgraphs);
-//     documents.all().forEach(async(v) => {
-//         if (v.languageId === "rainlang") {
-//             langServices.rainDocuments.delete(v.uri);
-//             validate(v);
-//         }
-//     });
-// });
-
-documents.onDidOpen(v => {
-    const text = v.document.getText();
-    validate(v.document, text, v.document.version);
-    // metaStore.storeDotrain(text, v.document.uri);
+connection.onDidOpenTextDocument(async v => {
+    validate(
+        v.textDocument.uri,
+        v.textDocument.text, 
+        v.textDocument.version, 
+        v.textDocument.languageId
+    );
 });
 
-documents.onDidClose(v => {
-    connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
+connection.onDidCloseTextDocument(v => {
+    connection.sendDiagnostics({ uri: v.textDocument.uri, diagnostics: []});
 });
 
 documents.onDidChangeContent(change => {
-    validate(change.document, change.document.getText(), change.document.version);
+    validate(
+        change.document.uri, 
+        change.document.getText(), 
+        change.document.version, 
+        change.document.languageId
+    );
 });
 
 documents.onDidSave(e => {
     if (e.document.languageId === "rainlang" && hashMap.has(e.document.uri)) {
         setHashMap(e.document.getText(), e.document.uri);
-        metaStore.storeDotrain(
-            e.document.getText(), e.document.uri
-        ).then(({ newHash, oldHash }) => {
-            if (oldHash !== undefined) {
-                const changes: { [uri: string]: TextEdit[] } = {};
-                hashMap.forEach((imports, uri) => {
-                    if (uri !== e.document.uri) {
-                        const imp = imports.find(
-                            e => e.hash.toLowerCase() === oldHash.toLowerCase()
-                        );
-                        if (imp) changes[uri] = [{ range: imp.range, newText: newHash }];
+        const [ h1, h2 ] = metaStore.setDotrain(
+            e.document.getText(), 
+            e.document.uri, 
+            false
+        );
+        const newHash = hexlify(h1);
+        if (h2 !== undefined) {
+            const oldHash = hexlify(h2);
+            const changes: { [uri: string]: TextEdit[] } = {};
+            hashMap.forEach((imports, uri) => {
+                if (uri !== e.document.uri) {
+                    const imp = imports.find(
+                        e => e.hash.toLowerCase() === oldHash.toLowerCase()
+                    );
+                    if (imp) changes[uri] = [{ range: imp.range, newText: newHash }];
+                }
+            });
+            if (Object.keys(changes).length > 0) connection.workspace.applyEdit(
+                { changes }
+            ).then(
+                () => {
+                    for (const uri in changes) {
+                        const doc = documents.get(uri);
+                        if (doc !== undefined) setHashMap(doc.getText(), uri);
                     }
-                });
-                if (Object.keys(changes).length > 0) connection.workspace.applyEdit(
-                    { changes }
-                ).then(
-                    () => {
-                        for (const uri in changes) {
-                            const doc = documents.get(uri);
-                            if (doc !== undefined) {
-                                const doc = documents.get(uri);
-                                if (doc !== undefined) setHashMap(doc.getText(), uri);
-                            }
-                        }
-                    },
-                    () => {
-                        for (const uri in changes) {
-                            const doc = documents.get(uri);
-                            if (doc !== undefined) setHashMap(doc.getText(), uri);
-                        }
+                },
+                () => {
+                    for (const uri in changes) {
+                        const doc = documents.get(uri);
+                        if (doc !== undefined) setHashMap(doc.getText(), uri);
                     }
-                );
-            }
-        });
+                }
+            );
+        }
     }
 });
 
@@ -258,8 +282,9 @@ connection.onDidChangeWatchedFiles(_change => {
 connection.onCompletion(params => {
     const textDoc = documents.get(params.textDocument.uri);
     if (textDoc?.languageId === "rainlang") return langServices.doComplete(
-        textDoc, 
-        params.position
+        toTextDocumentItem(textDoc), 
+        params.position,
+        "markdown"
     );
     else return null;
 });
@@ -269,104 +294,27 @@ connection.onCompletionResolve(item => item);
 connection.onHover(params => {
     const textDoc = documents.get(params.textDocument.uri);
     if (textDoc?.languageId === "rainlang") return langServices.doHover(
-        textDoc, 
-        params.position
+        toTextDocumentItem(textDoc), 
+        params.position,
+        "markdown"
     );
     else return null;
 });
 
 // provide semantic token highlighting
 connection.languages.semanticTokens.on(async e => {
-    let data: number[];
-    const _td = documents.get(e.textDocument.uri);
-    if (_td && _td.languageId === "rainlang") {
-        const _rd = new RainDocument(_td, metaStore);
-        (_rd as any)._shouldSearch = false;
-        await _rd.parse();
-        let _lastLine = 0;
-        let _lastChar = 0;
-        data = _rd.bindings.filter(v => 
-            v.elided !== undefined || (
-                v.exp !== undefined && v.problems.find(
-                    e => e.code === ErrorCode.ElidedBinding
-                )
-            )
-        ).flatMap(v => {
-            if (v.exp !== undefined) return v.problems.filter(
-                e => e.code === ErrorCode.ElidedBinding
-            ).map(e => Range.create(
-                _rd.textDocument.positionAt(e.position[0]), 
-                _rd.textDocument.positionAt(e.position[1] + 1)
-            ));
-            else {
-                const _start = _rd.textDocument.positionAt(v.contentPosition[0] + 1);
-                const _end = _rd.textDocument.positionAt(v.contentPosition[1] + 1);
-                if (_start.line === _end.line) return [Range.create(_start, _end)];
-                else {
-                    const _ranges = [];
-                    for (let i = 0; i <= _end.line - _start.line; i++) {
-                        if (i === 0) _ranges.push(Range.create(
-                            _start, 
-                            _rd.textDocument.positionAt(
-                                (_rd.textDocument.offsetAt(
-                                    {line: _start.line + 1, character: 0}) - 1
-                                )
-                            ))
-                        );
-                        else if (i === _end.line - _start.line) _ranges.push(
-                            Range.create({line: _end.line, character: 0}, _end)
-                        );
-                        else {
-                            if (_start.line + i >= _rd.textDocument.lineCount) {
-                                const _pos = _rd.textDocument.positionAt(
-                                    _rd.getText().length - 1
-                                );
-                                _ranges.push(Range.create(
-                                    _rd.textDocument.lineCount - 1, 
-                                    0, 
-                                    _pos.line , 
-                                    _pos.character
-                                ));
-                            }
-                            else {
-                                const _pos = _rd.textDocument.positionAt(
-                                    _rd.textDocument.offsetAt(
-                                        {line: _start.line + i + 1, character: 0}
-                                    ) - 1
-                                );
-                                _ranges.push(Range.create(
-                                    _start.line + i, 
-                                    0, 
-                                    _pos.line, 
-                                    _pos.character
-                                ));
-                            }
-                        }
-                    }
-                    return _ranges;
-                }
-            }
-        }).sort((a, b) => a.start.line === b.start.line 
-            ? a.start.character - b.start.character 
-            : a.start.line - b.start.line
-        ).flatMap(v => {
-            const _lineDelta = v.start.line - _lastLine;
-            const _result = [
-                _lineDelta,
-                _lineDelta === 0
-                    ? v.start.character - _lastChar
-                    : v.start.character,
-                v.end.character - v.start.character,
-                0,
-                1
-            ];
-            _lastLine = v.start.line;
-            _lastChar = v.start.character;
-            return _result;
-        });
+    const textDoc = documents.get(e.textDocument.uri);
+    try {
+        if (textDoc?.languageId === "rainlang") return langServices.semanticTokens(
+            toTextDocumentItem(textDoc), 
+            0,
+            1
+        );
+        else return { data: [] };
     }
-    else data = [];
-    return { data };
+    catch {
+        return { data: [] };
+    }
 });
 
 // Make the text document manager listen on the connection
@@ -384,43 +332,12 @@ async function getSetting() {
 }
 
 // validate a document
-async function validate(textDocument: TextDocument, text: string, version: number) {
-    if (textDocument.languageId === "rainlang") {
-        // try {
-        //     const td = TextDocument.create(textDocument.uri, "rainlang", 0, text);
-        //     const rainDocument = await RainDocument.create(td, metaStore);
-        //     const diagnostics = await langServices.doValidate(rainDocument);
-        //     // check version of the text document before sending the diagnostics to VSCode
-        //     if (version === textDocument.version) {
-        //         connection.sendDiagnostics({ 
-        //             uri: textDocument.uri, 
-        //             diagnostics
-        //         });
-        //         // hashMap.set(
-        //         //     textDocument.uri, 
-        //         //     rainDocument.imports.filter(
-        //         //         v => HASH_PATTERN.test(v.hash)
-        //         //     ).map(
-        //         //         v => ({
-        //         //             hash: v.hash.toLowerCase(), 
-        //         //             range: Range.create(
-        //         //                 td.positionAt(v.hashPosition[0]),
-        //         //                 td.positionAt(v.hashPosition[1] + 1)
-        //         //             ) 
-        //         //         })
-        //         //     )
-        //         // );
-        //     }
-        // }
-        // catch (e) { /**/ }
-        const td = TextDocument.create(textDocument.uri, "rainlang", 0, text);
-        langServices.doValidate(td).then(
+async function validate(uri: string, text: string, version: number, languageId: string) {
+    if (startupReady && languageId === "rainlang") {
+        langServices.doValidateAsync({ uri, text, version, languageId }, true).then(
             diagnostics => {
-                if (version === textDocument.version) {
-                    connection.sendDiagnostics({ 
-                        uri: textDocument.uri, 
-                        diagnostics
-                    });
+                if (version === documents.get(uri)?.version) {
+                    connection.sendDiagnostics({ uri, diagnostics });
                 }
             },
             () => { /**/ }
@@ -430,19 +347,24 @@ async function validate(textDocument: TextDocument, text: string, version: numbe
 
 async function setHashMap(text: string, uri: string) {
     const _td = TextDocument.create(uri, "rainlang", 0, text);
-    const _rd = new RainDocument(_td, metaStore);
-    (_rd as any)._shouldSearch = false;
-    _rd.parse().then(
-        () => hashMap.set(
-            uri, 
-            _rd.imports.filter(v => HASH_PATTERN.test(v.hash)).map(v => ({
-                hash: v.hash.toLowerCase(), 
-                range: Range.create(
-                    _td.positionAt(v.hashPosition[0]),
-                    _td.positionAt(v.hashPosition[1] + 1)
-                ) 
-            }))
-        ),
-        () => hashMap.set(uri, [])
-    );   
+    const _rd = RainDocument.create(text, uri, metaStore);
+    hashMap.set(
+        uri, 
+        _rd.imports.map(v => ({
+            hash: v.hash.toLowerCase(), 
+            range: Range.create(
+                _td.positionAt(v.hashPosition[0]),
+                _td.positionAt(v.hashPosition[1])
+            ) 
+        }))
+    );
+}
+
+function toTextDocumentItem(textDocument: TextDocument): TextDocumentItem {
+    return {
+        text: textDocument.getText(),
+        uri: textDocument.uri,
+        version: textDocument.version,
+        languageId: textDocument.languageId
+    };
 }

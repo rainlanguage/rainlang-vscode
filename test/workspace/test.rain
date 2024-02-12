@@ -1,10 +1,8 @@
 /* This is test */
-@ dispair   0x78fd1edb0bdb928db6015990fecafbb964b44692e2d435693062dd4efc6254dd
-@ contmeta  0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
-  'calling-context new-name /* renaming "calling-context" to "new-name" */
-  base ! /* eliding an item from the items in the import */
+@ dispair   0x69f928f79cf7a4709cee16be786f28161f59f314fd36c7819c0af22c84eb1223
 
-@ 0xc509e3a2bd58cb0062fb80c6d9f2e40cb815694f5733c3041c2c620a46f6ad94 /* import ./constants/constants.rain to root */
+/* import ./constants/constants.rain to root */
+@ another-dotrain 0xc509e3a2bd58cb0062fb80c6d9f2e40cb815694f5733c3041c2c620a46f6ad94
   elided 12 /* rebind the elided binding in the import */
   'elided twelve /* and then rename to avoid shadowing the elided binding below */
   'value const /* rename the value so it wont shadow the constant binding below */
@@ -15,7 +13,7 @@
 #elided
   ! this is elided, rebind before using
 
-#main
-  _: twelve,
-  _: .my-address,
-  _: int-add(.dispair.int-max(twelve .value infinity) .const .contmeta.new-name<1>());
+#main 
+  _: another-dotrain.my-address,
+  var: .another-dotrain.twelve,
+  _: int-add(var int-max(.value));

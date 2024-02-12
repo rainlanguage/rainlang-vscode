@@ -1,10 +1,9 @@
 {
-  "constants": [
-    "12",
-    "0x1234567890123456789012345678901234567890",
-    "10000000000000",
-    "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    "291"
-  ],
-  "bytecode": "0x01000009070003010000000100000102000100010000040100000301000002010000001d03000019030000"
+  "Revert": {
+    "BadOpInputsLength": {
+      "opIndex": "0x3",
+      "calculatedInputs": "0x2",
+      "bytecodeInputs": "0x1"
+    }
+  }
 }
