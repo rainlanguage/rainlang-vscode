@@ -1,6 +1,4 @@
 /* This is test */
-@ dispair   0x69f928f79cf7a4709cee16be786f28161f59f314fd36c7819c0af22c84eb1223
-
 /* import ./constants/constants.rain to root */
 @ another-dotrain 0xc509e3a2bd58cb0062fb80c6d9f2e40cb815694f5733c3041c2c620a46f6ad94
   elided 12 /* rebind the elided binding in the import */
