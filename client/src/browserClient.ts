@@ -710,5 +710,5 @@ async function updateMetaStore(content: any, workspaceRootUri: vscode.Uri): Prom
     //     }
     // }
 
-    client.sendNotification("update-meta-store", [subgraphs, metas, deployers]);
+    client.sendNotification("update-meta-store", [subgraphs]);
 }

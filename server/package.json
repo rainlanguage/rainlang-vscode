@@ -15,7 +15,7 @@
 		"url": "https://github.com/rainprotocol/rainlang-vscode/issues"
 	},
 	"dependencies": {
-		"@rainlanguage/dotrain": "file:../../rainlang/rainlanguage-dotrain-5.1.6.tgz",
+		"@rainlanguage/dotrain": "file:../../dotrain/rainlanguage-dotrain-6.0.0.tgz",
 		"vscode-languageserver": "^8.1.0",
 		"vscode-languageserver-textdocument": "^1.0.11"
 	},

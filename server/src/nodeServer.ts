@@ -8,8 +8,8 @@ import {
     RainDocument,
     TextDocumentItem, 
     RainLanguageServices,
-    DeployerQueryResponse,
-    getDeployedBytecodeMetaHash 
+    // DeployerQueryResponse,
+    // getDeployedBytecodeMetaHash 
 } from "@rainlanguage/dotrain";
 import {
     TextEdit, 
@@ -102,40 +102,6 @@ connection.onInitialized(() => {
 // update meta store when config has changed and revalidate documents
 connection.onNotification("update-meta-store", async e => {
     try {
-        for (const d of e[1]) {
-            try {
-                if (typeof d === "string") {
-                    const data = arrayify(d);
-                    metaStore.updateWith(keccak256(data), data);
-                } else {
-                    metaStore.updateWith(keccak256(d), d);
-                }
-            }
-            catch { /**/ }
-        }
-        for (let i = 0; i < e[2].length; i++) {
-            try {
-                const deployerDetails = e[2][i];
-                let metaBytes;
-                if (typeof deployerDetails[1] === "string") {
-                    metaBytes = arrayify(deployerDetails[1]);
-                } else {
-                    metaBytes = deployerDetails[0];
-                }
-                const deployer: DeployerQueryResponse = {
-                    txHash: arrayify(deployerDetails[0]),
-                    bytecodeMetaHash: getDeployedBytecodeMetaHash(deployerDetails[3]),
-                    metaHash: keccak256(metaBytes),
-                    metaBytes,
-                    bytecode: arrayify(deployerDetails[2]),
-                    parser: arrayify(deployerDetails[4]),
-                    store: arrayify(deployerDetails[5]),
-                    interpreter: arrayify(deployerDetails[6])
-                };
-                metaStore.setDeployer(deployer);
-            }
-            catch { /**/ }
-        }
         metaStore.addSubgraphs(e[0]);
         // documents.all().forEach(v => validate(v, v.getText(), v.version));
     }
@@ -172,7 +138,7 @@ connection.onExecuteCommand(async e => {
             else _td = uriOrFile;
             if (_td) {
                 try {
-                    return await RainDocument.compileTextAsync(_td, expKeys, metaStore);
+                    return await RainDocument.composeTextAsync(_td, expKeys, metaStore);
                 }
                 catch (err) {
                     return err;
@@ -347,7 +313,7 @@ async function validate(uri: string, text: string, version: number, languageId: 
 
 async function setHashMap(text: string, uri: string) {
     const _td = TextDocument.create(uri, "rainlang", 0, text);
-    const _rd = RainDocument.create(text, uri, metaStore);
+    const _rd = RainDocument.create(text, metaStore);
     hashMap.set(
         uri, 
         _rd.imports.map(v => ({
