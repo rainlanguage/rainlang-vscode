@@ -135,7 +135,10 @@
       {
         "language": "rainlang",
         "scopeName": "source.rainlang",
-        "path": "./syntaxes/rainlang-syntax.json"
+        "path": "./syntaxes/rainlang-syntax.json",
+        "embeddedLanguages": {
+          "meta.embedded.frontmatter.rainlang": "yaml"
+        }
       },
       {
         "path": "./syntaxes/rainlang-injection.json",

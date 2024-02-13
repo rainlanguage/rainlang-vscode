@@ -3,6 +3,9 @@
   "name": "Rain Language",
   "patterns": [
     {
+      "include": "#frontmatter"
+    },    
+    {
       "include": "#comment"
     },
     {
@@ -27,13 +30,29 @@
       "include": "#alias"
     },
     {
+      "include": "#string-literal"
+    },
+    {
       "include": "#number"
+    },
+    {
+      "include": "#sub-parser"
     },
     {
       "include": "#punctuation"
     }
   ],
   "repository": {
+    "frontmatter": {
+      "begin": "\\A",
+      "end": "---",
+      "contentName": "meta.embedded.frontmatter.rainlang",
+      "patterns": [
+        {
+          "include": "source.yaml"
+        }
+      ]
+    },
     "comment": {
       "patterns": [
         {
@@ -58,7 +77,7 @@
       "name": "keyword.operator.assignment.rainlang"
     },
     "reserved": {
-      "match": "infinity|max-uint-256|max-uint256",
+      "match": "using-words-from",
       "name": "keyword.reserved.rainlang"
     },
     "import": {
@@ -90,6 +109,11 @@
       "match": "'[a-zA-Z0-9-_.]*",
       "name": "string.quoted.single.rainlang" 
     },
+    "string-literal": {
+      "begin": "\"",
+      "end": "\"",
+      "name": "string.quoted.double.rainlang" 
+    },
     "number": {
       "patterns": [
         {
@@ -100,9 +124,6 @@
         },
         {
           "include": "#number-hex"
-        },
-        {
-          "include": "#number-binary"
         }
       ]
     },
@@ -118,10 +139,6 @@
       "match": "\\b(0x[a-fA-F0-9]+)\\b",
       "name": "constant.numeric.hexadecimal.rainlang"
     },
-    "number-binary": {
-      "match": "\\b(0b[0-1]+)\\b",
-      "name": "constant.numeric.binary.rainlang"
-    },
     "opcode": {
       "match": "\\b([a-z][a-z0-9\\-]*(?=[\\(\\<]))",
       "captures": {
@@ -129,6 +146,11 @@
           "name": "keyword.control.opcode.rainlang"
         }
       }
+    },
+    "sub-parser": {
+      "begin": "\\[",
+      "end": "\\]",
+      "contentName": "string.quoted.double.rainlang" 
     },
     "alias": {
       "patterns": [
