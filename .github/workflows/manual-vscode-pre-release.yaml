@@ -34,7 +34,7 @@ jobs:
         run: npx playwright install
 
       # Run the desktop tests using headless setup
-      - name: Desktop Extension Test
+      - name: Extension Test
         uses: coactions/setup-xvfb@v1
         with:
           run: npm test

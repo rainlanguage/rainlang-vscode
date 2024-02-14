@@ -3,6 +3,7 @@ import {
     Range, 
     hexlify, 
     MetaStore, 
+    MarkupKind, 
     RainDocument,
     TextDocumentItem, 
     RainLanguageServices,
@@ -210,7 +211,7 @@ connection.onCompletion(params => {
     if (textDoc?.languageId === "rainlang") return langServices.doComplete(
         toTextDocumentItem(textDoc), 
         params.position,
-        "markdown"
+        MarkupKind.Markdown
     );
     else return null;
 });
@@ -222,7 +223,7 @@ connection.onHover(params => {
     if (textDoc?.languageId === "rainlang") return langServices.doHover(
         toTextDocumentItem(textDoc), 
         params.position,
-        "markdown"
+        MarkupKind.Markdown
     );
     else return null;
 });

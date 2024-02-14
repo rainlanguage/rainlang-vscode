@@ -9,9 +9,8 @@ This extension provides the following language features:
 - Semantic Syntax Highlighting
 - rainconfig tips (schema)
 - .rain files watch
-- .rain Compilation
-- .rain files auto-compile on save
-- access local .rain files from completion suggestions applied as hash
+- .rain Composition to rainlang text
+- eaily import local .rain files from completion suggestions applied as hash
 - control extension from statusbar
 
 It also includes an End-to-End test.
@@ -51,7 +50,7 @@ _: add(1 2)
 <br>
 
 ## rainconfig
-rainconfig specifies the configuration details for compiler and language server and should be placed in the root directory of working workspace named `rainconfig.json`, an schema is applied to the rainconfig if this extension is active. 
+rainconfig specifies the configuration details for .rain composer and language server and should be placed in the root directory of working workspace named `rainconfig.json`, an schema is applied to the rainconfig if this extension is active. 
 bellow is the list of rainconfig fields (all fields are optional):
 - `include`: Specifies a list of directories (files/folders) to be included in watch. 'src' files are included by default and folders will be watched recursively for .rain files.
 - `subgraphs`: Specifies additional subgraph endpoints to search for a meta for a given hash, [default rain subgraphs](https://github.com/rainprotocol/meta/blob/master/src/rainSubgraphs.ts) are always included.
@@ -61,9 +60,9 @@ example:
 {
   "include": ["./path/to/folder", "./path/to/another-folder"],
   "subgraphs": [
-    "https://subgraph1-uril",
-    "https://subgraph2-uril",
-    "https://subgraph3-uril"
+    "https://subgraph1-url",
+    "https://subgraph2-url",
+    "https://subgraph3-url"
   ]
 }
 ```
@@ -79,11 +78,11 @@ example:
 ## Developers Guide
 
 - Clone the repo and open VS Code on this folder.
-- Run `npm install` in this folder or `nix-shell` if you have nix installed on your machine. This installs all necessary npm modules in both the client and server folder
+- Run `npm install` in this folder or `nix devlop -c npm install` if you have nix installed on your machine. This installs all necessary npm modules in both the client and server folder
 - Switch to the Run and Debug View in the Sidebar (Ctrl+Shift+D).
 - Select `Launch Client Desktop` for desktop mode or `Launch Client Web` for browser mode from the drop down (if it is not already).
 - Press ▷ to run the launch config (F5) which will open a new instance of vscode called [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.).
-- The [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, will open a pre configured workspace (the `./dev-workspace` folder from root of this repo), you can configure `.vscode/settings.json` to set additional subgraphs URLs as explained above in Tutorial section.
+- The [Extension Development Host](https://code.visualstudio.com/api/get-started/your-first-extension#:~:text=Then%2C%20inside%20the%20editor%2C%20press%20F5.%20This%20will%20compile%20and%20run%20the%20extension%20in%20a%20new%20Extension%20Development%20Host%20window.) instance of VSCode, will open a pre configured workspace (the `./test/workspace` folder from root of this repo).
 - Start editing the `test.rain` file.
 - Alternatively create a document that ends with `.rain` to start the language mode for that.
   - Start typing your expression and get the completion for opcodes.
