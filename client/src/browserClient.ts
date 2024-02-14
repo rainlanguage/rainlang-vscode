@@ -5,8 +5,7 @@ import { LanguageClient, LanguageClientOptions } from "vscode-languageclient/bro
 
 
 let client: LanguageClient;
-const defaultConfigPath1 = "./rainconfig.json";
-const defaultConfigPath2 = "./.rainconfig.json";
+const defaultConfigPath = "./rainconfig.json";
 
 // this method is called when vs code is activated
 export async function activate(context: vscode.ExtensionContext) {
@@ -288,8 +287,9 @@ export async function activate(context: vscode.ExtensionContext) {
                 // wait for server to fully start
                 // await sleep(6000);
                 try {
-                    defaultConfigUri = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath1);
-                    configUri = defaultConfigUri;
+                    defaultConfigUri = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath);
+                    const exists = await isConfig(defaultConfigUri);
+                    if (exists) configUri = defaultConfigUri;
                     const content = JSON.parse(
                         uint8ArrayToString(
                             await vscode.workspace.fs.readFile(configUri)
@@ -459,4 +459,16 @@ async function updateMetaStore(content: any, workspaceRootUri: vscode.Uri): Prom
         ) subgraphs.push(...content.subgraphs);
     }
     client.sendNotification("update-meta-store", [subgraphs]);
+}
+
+// checks if a config file exists
+async function isConfig(uri: vscode.Uri): Promise<boolean> {
+    try {
+        const stat = await vscode.workspace.fs.stat(uri);
+        if (stat.type === vscode.FileType.File) return true;
+        else return false;
+    }
+    catch (error) {
+        return false;
+    }
 }

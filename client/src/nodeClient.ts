@@ -311,7 +311,8 @@ export async function activate(context: vscode.ExtensionContext) {
                 // await sleep(6000);
                 try {
                     defaultConfigUri = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath);
-                    configUri = defaultConfigUri;
+                    const exists = await isConfig(defaultConfigUri);
+                    if (exists) configUri = defaultConfigUri;
                     const content = JSON.parse(
                         (await vscode.workspace.fs.readFile(configUri)).toString()
                     );
@@ -477,4 +478,16 @@ async function updateMetaStore(content: any, workspaceRootUri: vscode.Uri): Prom
         ) subgraphs.push(...content.subgraphs);
     }
     client.sendNotification("update-meta-store", [subgraphs]);
+}
+
+// checks if a config file exists
+async function isConfig(uri: vscode.Uri): Promise<boolean> {
+    try {
+        const stat = await vscode.workspace.fs.stat(uri);
+        if (stat.type === vscode.FileType.File) return true;
+        else return false;
+    }
+    catch (error) {
+        return false;
+    }
 }
