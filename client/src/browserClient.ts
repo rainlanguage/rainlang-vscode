@@ -18,8 +18,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let disposables: vscode.Disposable[] = [];
 
     // default config uri set at the fisrt start of the server
-    let defaultConfigUri1: vscode.Uri;
-    let defaultConfigUri2: vscode.Uri;
+    let defaultConfigUri: vscode.Uri;
 
     // config file URI
     let configUri: vscode.Uri;
@@ -30,9 +29,6 @@ export async function activate(context: vscode.ExtensionContext) {
     // directories to check for rain documents, default is "src"
     let watched: vscode.Uri[] = [];
 
-    // auto compile mappings
-    const compile = { onSave: [] };
-
     // channel for rainlang compiler
     let compilerChannel: vscode.OutputChannel;
 
@@ -40,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
             { language: "rainlang" },
-            { pattern: "*rainconfig.json", language: "json" },
+            // { pattern: "*rainconfig.json", language: "json" },
         ],
         synchronize: {},
         // initializationOptions: JSON.stringify(initConfig)
@@ -60,9 +56,9 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("rainlang.start", start),
         vscode.commands.registerCommand("rainlang.stop", stop),
         vscode.commands.registerCommand("rainlang.restart", restart),
-        vscode.commands.registerCommand("rainlang.onsave", updateOnSaveCompile),
-        vscode.commands.registerCommand("rainlang.compile", compileCurrentHandler),
-        vscode.commands.registerCommand("rainlang.compile.all", compileAllHandler)
+        // vscode.commands.registerCommand("rainlang.onsave", updateOnSaveCompile),
+        vscode.commands.registerCommand("rainlang.compose", composeHandler),
+        // vscode.commands.registerCommand("rainlang.compile.all", compileAllHandler)
     );
 
     function updateStatus() {
@@ -73,15 +69,15 @@ export async function activate(context: vscode.ExtensionContext) {
             statusBar.tooltip.appendMarkdown([
                 "\n\n[Stop Server](command:rainlang.stop)",
                 "\n\n[Restart Server](command:rainlang.restart)",
-                "\n\n---\n\n",
-                "\n\n[Compile](command:rainlang.compile.all)",
+                // "\n\n---\n\n",
+                // "\n\n[Compile](command:rainlang.compile.all)",
             ].join(""));
-            if (extStatus.onsave) statusBar.tooltip.appendMarkdown(
-                "\n\n[Turn Off Compile-On-Save](command:rainlang.onsave)",
-            );
-            else statusBar.tooltip.appendMarkdown(
-                "\n\n[Turn On Compile-On-Save](command:rainlang.onsave)",
-            );
+            // if (extStatus.onsave) statusBar.tooltip.appendMarkdown(
+            //     "\n\n[Turn Off Compile-On-Save](command:rainlang.onsave)",
+            // );
+            // else statusBar.tooltip.appendMarkdown(
+            //     "\n\n[Turn On Compile-On-Save](command:rainlang.onsave)",
+            // );
         }
         else {
             statusBar.tooltip = new vscode.MarkdownString("Rainlang Extension (stopped)", true);
@@ -92,79 +88,50 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     // handler for rainlang compiler, send the request to server and logs the result in output channel
-    async function compileCurrentHandler() {
+    async function composeHandler() {
         if (client && extStatus.active) {
             const expKeys = Array.from((await vscode.window.showInputBox({
                 title: "Expression Names",
                 placeHolder: "binding-1 binding-2 ...",
                 prompt: "specify the expression names in order by a whitespace seperating them"
             })).matchAll(/[^\s]+/g)).map(v => v[0]);
-            const result = await vscode.commands.executeCommand(
-                "_compile",
-                vscode.window.activeTextEditor.document.languageId,
-                vscode.window.activeTextEditor.document.uri.toString(),
-                JSON.stringify(expKeys),
-                "uri"
-                // {
-                //     start: vscode.window.activeTextEditor.selection.start,
-                //     end: vscode.window.activeTextEditor.selection.end,
-                // }
-            );
             if (!compilerChannel) compilerChannel = vscode.window.createOutputChannel(
                 "Rain Language Compiler",
-                "json"
+                // "code-runner-output"
             );
-            compilerChannel.show(true);
-            if (result) compilerChannel.appendLine(format(
-                JSON.stringify(result, null, 2), 
-                { parser: "json", plugins: [ babelParser ] }
-            ));
-            else compilerChannel.appendLine("undefined");
-        }
-        else vscode.window.showErrorMessage("rain language server is not running!");
-    }
-
-    // handler for rainlang compiler by sending the request to server for a mapping
-    async function compileAllHandler() {
-        if (client && extStatus.active) {
-            const workspaceEdit = new vscode.WorkspaceEdit();
-            for (const map of compile.onSave) {
-                try {
-                    const fileContent = uint8ArrayToString(
-                        await vscode.workspace.fs.readFile(map.input)
-                    );
-                    const result = await vscode.commands.executeCommand(
-                        "_compile",
-                        "rainlang",
-                        fileContent,
-                        JSON.stringify(map.entrypoints),
-                        "file"
-                    );
-                    const contents = Uint8Array.from(
-                        Array.from(result 
-                            ? format(
-                                JSON.stringify(result, null, 2), 
-                                { parser: "json", plugins: [ babelParser ] }
-                            )
-                            : "\"failed to compile!\""
-                        ).map(char => char.charCodeAt(0))
-                    );
-                    workspaceEdit.createFile(
-                        map.output,
-                        { overwrite: true, contents }
-                    );
+            try {
+                const result = await vscode.commands.executeCommand(
+                    "_compose",
+                    vscode.window.activeTextEditor.document.languageId,
+                    vscode.window.activeTextEditor.document.uri.toString(),
+                    JSON.stringify(expKeys),
+                    // {
+                    //     start: vscode.window.activeTextEditor.selection.start,
+                    //     end: vscode.window.activeTextEditor.selection.end,
+                    // }
+                );
+                compilerChannel.show(true);
+                if (result[1]) {
+                    compilerChannel.appendLine([
+                        new Date(),
+                        result[0],
+                    ].join("\n\n"));
+                } else {
+                    compilerChannel.appendLine([
+                        new Date(),
+                        JSON.stringify(result[0], null, 2),
+                    ].join("\n\n"));
                 }
-                catch { /**/ }
+            } catch (e) {
+                console.log(e);
+                compilerChannel.show(true);
+                compilerChannel.appendLine([
+                    new Date(),
+                    JSON.stringify(e, null, 2),
+                ].join("\n\n"));
             }
-            vscode.workspace.applyEdit(workspaceEdit);
         }
         else vscode.window.showErrorMessage("rain language server is not running!");
-    }
-
-    function updateOnSaveCompile() {
-        if (extStatus.onsave) extStatus.onsave = false;
-        else extStatus.onsave = true;
-        updateStatus();
     }
 
     async function restart() {
@@ -183,7 +150,6 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         else {
             watched = [];
-            compile.onSave = [];
             configUri = undefined;
             disposables.forEach(v => v?.dispose());
             disposables = [];
@@ -212,47 +178,19 @@ export async function activate(context: vscode.ExtensionContext) {
             }
             catch {
                 watched = [];
-                compile.onSave = [];
-            }
-            if (extStatus.onsave) {
-                const saveMap = compile.onSave.find(v => v.input.toString() === e.uri.toString());
-                if (saveMap) {
-                    const workspaceEdit = new vscode.WorkspaceEdit();
-                    const result = await vscode.commands.executeCommand(
-                        "_compile",
-                        e.languageId,
-                        e.uri.toString(),
-                        JSON.stringify(saveMap.entrypoints),
-                        "uri"
-                    );
-                    const contents = Uint8Array.from(
-                        Array.from(result 
-                            ? format(
-                                JSON.stringify(result, null, 2), 
-                                { parser: "json", plugins: [ babelParser ] }
-                            )
-                            : "\"failed to compile!\""
-                        ).map(char => char.charCodeAt(0))
-                    );
-                    workspaceEdit.createFile(
-                        saveMap.output,
-                        { overwrite: true, contents }
-                    );
-                    vscode.workspace.applyEdit(workspaceEdit);
-                }
             }
         }));
 
         disposables.push(vscode.workspace.onDidCreateFiles(async created => {
             let didProcessConfig = false;
-            if (configUri === undefined && defaultConfigUri1 !== undefined) {
+            if (configUri === undefined && defaultConfigUri !== undefined) {
                 for (let i = 0; i < created.files.length; i++) {
-                    if (created.files[i].toString() === defaultConfigUri1.toString()) {
+                    if (created.files[i].toString() === defaultConfigUri.toString()) {
                         try {
-                            configUri = defaultConfigUri1;
+                            configUri = defaultConfigUri;
                             const content = JSON.parse(
                                 uint8ArrayToString(
-                                    await vscode.workspace.fs.readFile(defaultConfigUri1)
+                                    await vscode.workspace.fs.readFile(defaultConfigUri)
                                 )
                             );
                             didProcessConfig = true;
@@ -261,26 +199,6 @@ export async function activate(context: vscode.ExtensionContext) {
                         }
                         catch {
                             watched = [];
-                            compile.onSave = [];
-                            client.sendNotification("unwatch-all");
-                            break;
-                        }
-                    }
-                    if (created.files[i].toString() === defaultConfigUri2.toString()) {
-                        try {
-                            configUri = defaultConfigUri2;
-                            const content = JSON.parse(
-                                uint8ArrayToString(
-                                    await vscode.workspace.fs.readFile(defaultConfigUri2)
-                                )
-                            );
-                            didProcessConfig = true;
-                            processConfig(content);
-                            break;
-                        }
-                        catch {
-                            watched = [];
-                            compile.onSave = [];
                             client.sendNotification("unwatch-all");
                             break;
                         }
@@ -296,7 +214,6 @@ export async function activate(context: vscode.ExtensionContext) {
                     try {
                         if (deleted.files[i].toString() === configUri.toString()) {
                             watched = [];
-                            compile.onSave = [];
                             configUri = undefined;
                             client.sendNotification("unwatch-all");
                             break;
@@ -311,24 +228,13 @@ export async function activate(context: vscode.ExtensionContext) {
         disposables.push(vscode.workspace.onDidRenameFiles(async renamed => {
             let didProcessConfig = false;
             if (configUri === undefined) {
-                if(defaultConfigUri1 !== undefined) for(let i = 0; i < renamed.files.length; i++) {
+                if(defaultConfigUri !== undefined) for(let i = 0; i < renamed.files.length; i++) {
                     try {
-                        if (renamed.files[i].newUri.toString() === defaultConfigUri1.toString()) {
-                            configUri = defaultConfigUri1;
+                        if (renamed.files[i].newUri.toString() === defaultConfigUri.toString()) {
+                            configUri = defaultConfigUri;
                             const content = JSON.parse(
                                 uint8ArrayToString(
-                                    await vscode.workspace.fs.readFile(defaultConfigUri1)
-                                )
-                            );
-                            didProcessConfig = true;
-                            processConfig(content);
-                            break;
-                        }
-                        if (renamed.files[i].newUri.toString() === defaultConfigUri2.toString()) {
-                            configUri = defaultConfigUri2;
-                            const content = JSON.parse(
-                                uint8ArrayToString(
-                                    await vscode.workspace.fs.readFile(defaultConfigUri2)
+                                    await vscode.workspace.fs.readFile(defaultConfigUri)
                                 )
                             );
                             didProcessConfig = true;
@@ -338,7 +244,6 @@ export async function activate(context: vscode.ExtensionContext) {
                     }
                     catch { 
                         watched = [];
-                        compile.onSave = [];
                         client.sendNotification("unwatch-all");
                         break;
                     }
@@ -348,16 +253,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 for (let i = 0; i < renamed.files.length; i++) {
                     try {
                         if (renamed.files[i].oldUri.toString() === configUri.toString()) {
-                            if(renamed.files[i].newUri.toString() ===defaultConfigUri1?.toString()){
-                                configUri = defaultConfigUri1;
-                                break;
-                            }
-                            if(renamed.files[i].newUri.toString() ===defaultConfigUri2?.toString()){
-                                configUri = defaultConfigUri2;
+                            if(renamed.files[i].newUri.toString() ===defaultConfigUri?.toString()){
+                                configUri = defaultConfigUri;
                                 break;
                             }
                             watched = [];
-                            compile.onSave = [];
                             configUri = undefined;
                             client.sendNotification("unwatch-all");
                             break;
@@ -388,14 +288,8 @@ export async function activate(context: vscode.ExtensionContext) {
                 // wait for server to fully start
                 // await sleep(6000);
                 try {
-                    defaultConfigUri1 = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath1);
-                    defaultConfigUri2 = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath2);
-                    const isConfig1 = await isConfig(defaultConfigUri1);
-                    if (isConfig1) configUri = defaultConfigUri1;
-                    else {
-                        const isConfig2 = await isConfig(defaultConfigUri2);
-                        if (isConfig2) configUri = defaultConfigUri2;
-                    }
+                    defaultConfigUri = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath1);
+                    configUri = defaultConfigUri;
                     const content = JSON.parse(
                         uint8ArrayToString(
                             await vscode.workspace.fs.readFile(configUri)
@@ -405,7 +299,6 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
                 catch {
                     watched = [];
-                    compile.onSave = [];
                 }
             }
         }));
@@ -446,48 +339,6 @@ export async function activate(context: vscode.ExtensionContext) {
         const newWatched: vscode.Uri[] = [];
         await client.sendNotification("unwatch-all");
         updateMetaStore(content, workspaceRootUri);
-        if (
-            content?.src?.length > 0 && 
-            Array.isArray(content.src) && 
-            content.src.every((v: any) => 
-                typeof v === "object" &&
-                v.input !== undefined &&
-                v.output !== undefined &&
-                v.entrypoints !== undefined &&
-                typeof v.input === "string" &&
-                typeof v.output === "string" &&
-                v.input.endsWith(".rain") &&
-                Array.isArray(v.entrypoints) &&
-                v.entrypoints.length > 0 &&
-                v.entrypoints.every((e: any) => typeof e === "string")
-            )
-        ) {
-            compile.onSave = content.src.map((v: any) => ({
-                input: vscode.Uri.joinPath(
-                    workspaceRootUri, 
-                    v.input
-                ),
-                output: vscode.Uri.joinPath(
-                    workspaceRootUri, 
-                    v.output.endsWith(".json") ? v.output : v.output + ".json"
-                ),
-                entrypoints: v.entrypoints
-            }));
-            for (const {input} of compile.onSave) {
-                promiseGroup1.push(vscode.workspace.fs.stat(input).then(stat => {
-                    if (stat.type === vscode.FileType.File) {
-                        promiseGroup2.push(vscode.workspace.fs.readFile(input).then(
-                            v => client.sendNotification(
-                                "watch-dotrain", 
-                                [input.toString(), uint8ArrayToString(v)]
-                            ),
-                            () => { /**/ }
-                        ));
-                    }
-                }));
-                newWatched.push(input);
-            }
-        }
 
         // find .rains on startup and send them to server for storing in meta store
         if (
@@ -548,24 +399,21 @@ function uint8ArrayToString(uint8array: Uint8Array): string {
     return decoder.decode(uint8array);
 }
 
-function hexlify(data: Uint8Array): string {
+function hexlify(value: Uint8Array): string {
     let result = "0x";
-    for (let i = 0; i < data.length; i++) {
-        result += data[i].toString(16);
+    for (let i = 0; i < value.length; i++) {
+        result += value[i].toString(16).padStart(2, "0");
     }
     return result;
 }
 
-// checks if a config file exists
-async function isConfig(uri: vscode.Uri): Promise<boolean> {
-    try {
-        const stat = await vscode.workspace.fs.stat(uri);
-        if (stat.type === vscode.FileType.File) return true;
-        else return false;
+function arrayify(value: string): Uint8Array {
+    const array: number[] = [];
+    const v = value.startsWith("0x") ? value.substring(2) : value;
+    for (let i = 0; i < v.length; i += 2) {
+        array.push(parseInt(v.substring(i, i + 2), 16));
     }
-    catch (error) {
-        return false;
-    }
+    return Uint8Array.from(array);
 }
 
 // finds .rain files by searching recursively in the given directory, ignores "node_modules" directories
@@ -601,72 +449,14 @@ async function findRainFiles(uri: vscode.Uri): Promise<vscode.Uri[]> {
 
 // update meta store
 async function updateMetaStore(content: any, workspaceRootUri: vscode.Uri): Promise<void> {
-    const meta = [];
-    const nohash = [];
+    const metas = [];
     const subgraphs = [];
+    const deployers = [];
     if (content.subgraphs) {
         if (
             Array.isArray(content.subgraphs) && 
             content.subgraphs.every((v: any) => typeof v === "string")
         ) subgraphs.push(...content.subgraphs);
     }
-    if (typeof content?.meta === "object") {
-        if (content.meta.binary) {
-            if (
-                Array.isArray(content.meta.binary) && 
-                content.meta.binary.every((v: any) => 
-                    typeof v === "string" ||
-                    ( 
-                        typeof v === "object" &&
-                        v.path !== undefined &&
-                        v.hash !== undefined &&
-                        typeof v.path === "string" &&
-                        typeof v.hash === "string" &&
-                        /^0x[a-zA-F0-9]{64}$/.test(v.hash)
-                    )
-                )
-            ) {
-                for (const p of content.meta.binary) {
-                    const uri = typeof p === "string"
-                        ? vscode.Uri.joinPath(workspaceRootUri, p)
-                        : vscode.Uri.joinPath(workspaceRootUri, p.path);
-                    try {
-                        const d = hexlify(await vscode.workspace.fs.readFile(uri));
-                        if (typeof p === "string") nohash.push(d);
-                        else meta.push([p.hash, d]);
-                    }
-                    catch { /**/ }
-                }
-            }
-        }
-        if (content.meta.hex) {
-            if (
-                Array.isArray(content.meta.hex) && 
-                content.meta.hex.every((v: any) => 
-                    typeof v === "string" ||
-                    ( 
-                        typeof v === "object" &&
-                        v.path !== undefined &&
-                        v.hash !== undefined &&
-                        typeof v.path === "string" &&
-                        typeof v.hash === "string" &&
-                        /^0x[a-zA-F0-9]{64}$/.test(v.hash)
-                    )
-                )
-            ) {
-                for (const p of content.meta.hex) {
-                    const uri = typeof p === "string"
-                        ? vscode.Uri.joinPath(workspaceRootUri, p)
-                        : vscode.Uri.joinPath(workspaceRootUri, p.path);
-                    try {
-                        const d = uint8ArrayToString(await vscode.workspace.fs.readFile(uri));
-                        if (typeof p === "string") nohash.push(d);
-                        else meta.push([p.hash, d]);
-                    }
-                    catch { /**/ }
-                }
-            }
-        }
-    }
-    client.sendNotification("update-meta-store", [subgraphs, nohash, meta]);
+    client.sendNotification("update-meta-store", [subgraphs]);
 }

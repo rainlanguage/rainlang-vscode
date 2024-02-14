@@ -2,8 +2,8 @@
   "name": "rainlang-vscode",
   "displayName": "Rain Language",
   "publisher": "rainprotocol",
-  "description": "Rain Protocol language (rainlang) implementation for vscode",
-  "author": "Rain Protocol",
+  "description": "Rain Language (rainlang) implementation for vscode",
+  "author": "Rain Language",
   "license": "CAL-1.0",
   "version": "2.0.4",
   "private": true,
@@ -28,7 +28,7 @@
     "Formatters"
   ],
   "keywords": [
-    "rainprotocol",
+    "rainlanguage",
     "rain",
     "blockchain",
     "ethereum",
@@ -52,23 +52,15 @@
         "title": "Restart Rain Language Server"
       },
       {
-        "command": "rainlang.compile.all",
-        "title": "Rainlang Compile"
-      },
-      {
-        "command": "rainlang.compile",
-        "title": "Rainlang Compile Current"
+        "command": "rainlang.compose",
+        "title": "Rainlang Compose"
       }
     ],
     "menus": {
       "editor/context": [
         {
           "when": "resourceLangId == rainlang",
-          "command": "rainlang.compile"
-        },
-        {
-          "when": "resourceLangId == rainlang",
-          "command": "rainlang.compile.all"
+          "command": "rainlang.compose"
         }
       ]
     },
@@ -101,25 +93,7 @@
     ],
     "configurationDefaults": {
       "[rainlang]": {
-        "editor.semanticHighlighting.enabled": true,
-        "editor.language.colorizedBracketPairs": [
-          [
-            "<",
-            ">"
-          ],
-          [
-            "(",
-            ")"
-          ],
-          [
-            "{",
-            "}"
-          ],
-          [
-            "[",
-            "]"
-          ]
-        ]
+        "editor.semanticHighlighting.enabled": true
       }
     },
     "configuration": {
@@ -143,7 +117,10 @@
       {
         "language": "rainlang",
         "scopeName": "source.rainlang",
-        "path": "./syntaxes/rainlang-syntax.json"
+        "path": "./syntaxes/rainlang-syntax.json",
+        "embeddedLanguages": {
+          "meta.embedded.frontmatter.rainlang": "yaml"
+        }
       },
       {
         "path": "./syntaxes/rainlang-injection.json",

@@ -1,21 +1,23 @@
+some-key: kjh
+some-other-key: 
+  inner:
+    - test test
+---
 /* This is test */
-@ dispair   0x78fd1edb0bdb928db6015990fecafbb964b44692e2d435693062dd4efc6254dd
-@ contmeta  0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
-  'calling-context new-name /* renaming "calling-context" to "new-name" */
-  base ! /* eliding an item from the items in the import */
-
-@ 0xc509e3a2bd58cb0062fb80c6d9f2e40cb815694f5733c3041c2c620a46f6ad94 /* import ./constants/constants.rain to root */
-  elided 12 /* rebind the elided binding in the import */
-  'elided twelve /* and then rename to avoid shadowing the elided binding below */
-  'value const /* rename the value so it wont shadow the constant binding below */
+/* import ./constants/constants.rain to root */
+@ kjh 0xaf77eb4dfbd7d49ae5fa46c3cc6b9150985bd04f4d0a974d10a9396a0e2b41ac
+   /* elided 12 /* rebind the elided binding in the import */
+  /* 'elided twelve /* and then rename to avoid shadowing the elided binding below
+  'value const rename the value so it wont shadow the constant binding below */
 
 #value
   1e13
 
 #elided
   ! this is elided, rebind before using
-
-#main
-  _: twelve,
-  _: .my-address,
-  _: int-add(.dispair.int-max(twelve .value infinity) .const .contmeta.new-name<1>());
+#kj
+ _ _: add(1 2 0x1234546757567567 kjh.other-value kjh.my-address) div(12 12);
+ 
+#main 
+  using-words-from 0x123
+  _: int-add<'kj value kjh.my-address>(1 int-max(.value))

@@ -71,9 +71,9 @@ const node = (prod) => {
         resolve: {
             mainFields: ["module", "main"],
             extensions: [".ts", ".js"],
-            alias: {
-                "@rainprotocol/rainlang": "@rainprotocol/rainlang/cjs"
-            },
+            // alias: {
+            //     "@rainlanguage/dotrain": "@rainlanguage/dotrain/cjs"
+            // },
             // fallback: {
             //     path: require.resolve("path-browserify")
             // },
@@ -194,9 +194,9 @@ const browser = (prod) => {
         resolve: {
             mainFields: ["browser", "module", "main"],
             extensions: [".ts", ".js", ".json"],
-            alias: {
-                "@rainprotocol/rainlang": "@rainprotocol/rainlang/cjs"
-            },
+            // alias: {
+            //     "@rainprotocol/rainlang": "@rainprotocol/rainlang/cjs"
+            // },
             fallback: {
                 process: require.resolve("process/browser")
             },

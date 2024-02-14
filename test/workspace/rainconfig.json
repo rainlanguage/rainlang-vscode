@@ -1,27 +1,3 @@
 {
-  "include": ["./expressions", "./constants"],
-  "src": [
-    {
-      "input": "./test.rain",
-      "output": "./test.rain.json",
-      "entrypoints": ["main"]
-    } 
-  ],
-  "subgraphs": [
-    "https://subgraph1-endpoint",
-    "https://subgraph2-endpoint"
-  ],
-  "meta": {
-    "hex": [
-      "./meta/deployer.txt",
-      {
-        "path": "./meta/deployer-constructor.txt",
-        "hash": "0x11b9c1d11469bbe1034986e499732102eb817ae1ca851895a3d2ff2ea3161b84"
-      },
-      {
-        "path": "./meta/caller.txt",
-        "hash": "0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c"
-      }
-    ] 
-  }
+  "include": ["./expressions", "./constants"]
 }
