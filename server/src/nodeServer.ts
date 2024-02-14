@@ -2,14 +2,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { 
     Range, 
     hexlify, 
-    arrayify, 
     MetaStore, 
-    keccak256, 
     RainDocument,
     TextDocumentItem, 
     RainLanguageServices,
-    // DeployerQueryResponse,
-    // getDeployedBytecodeMetaHash 
 } from "@rainlanguage/dotrain";
 import {
     TextEdit, 
@@ -66,7 +62,7 @@ connection.onInitialize(async(params) => {
             },
             hoverProvider: true,
             executeCommandProvider: {
-                commands: ["_compile"]
+                commands: ["_compose"]
             },
             semanticTokensProvider: {
                 legend: {
@@ -127,26 +123,22 @@ connection.onNotification("reval-all", () => {
 
 // executes rain compile command
 connection.onExecuteCommand(async e => {
-    if (e.command === "_compile") {
+    if (e.command === "_compose") {
         const langId = e.arguments![0];
-        const uriOrFile = e.arguments![1];
+        const uri = e.arguments![1];
         const expKeys = e.arguments![2];
-        const isUri = e.arguments![3] === "uri";
         if (langId === "rainlang") {
-            let _td;
-            if (isUri) _td = documents.get(uriOrFile)?.getText();
-            else _td = uriOrFile;
+            const _td = documents.get(uri)?.getText();
             if (_td) {
                 try {
-                    return await RainDocument.composeTextAsync(_td, expKeys, metaStore);
-                }
-                catch (err) {
-                    return err;
+                    return [await RainDocument.composeTextAsync(_td, expKeys, metaStore), true];
+                } catch(e) {
+                    return [e, false];
                 }
             }
-            else return null;
+            else return [undefined, false];
         }
-        else return null;
+        else return [undefined, false];
     }
 });
 
@@ -211,34 +203,6 @@ documents.onDidSave(e => {
         }
     }
 });
-
-// connection.workspace.onDidDeleteFiles(deleted => {
-//     let shouldValidate = false;
-//     deleted.files.forEach(v => {
-//         if (v.uri.endsWith(".rain")) {
-//             // const hash = metaStore.dotrainCache[v.uri];
-//             metaStore.deleteDotrain(v.uri);
-//             const existed = hashMap.delete(v.uri);
-//             if (existed && !shouldValidate) shouldValidate = true;
-//             // if (hash !== undefined) hashMap.forEach((imports, uri) => {
-//             //     if (imports.find(e => e.hash.toLowerCase() === hash.toLowerCase())) {
-//             //         const doc = documents.get(uri);
-//             //         if (doc) validate(doc, doc.getText(), doc.version);
-//             //     }
-//             // });
-//         }
-//         else {
-//             hashMap.forEach((_, uri) => {
-//                 if (uri.startsWith(v.uri)) {
-//                     if (!shouldValidate) shouldValidate = true;
-//                     metaStore.deleteDotrain(uri);
-//                     hashMap.delete(uri);
-//                 }
-//             });
-//         }
-//     });
-//     if (shouldValidate) documents.all().forEach(v => validate(v, v.getText(), v.version));
-// });
 
 connection.onDidChangeWatchedFiles(_change => {
     // Monitored files have change in VSCode

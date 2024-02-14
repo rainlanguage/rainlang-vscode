@@ -52,15 +52,15 @@
         "title": "Restart Rain Language Server"
       },
       {
-        "command": "rainlang.compile",
-        "title": "Rainlang Compile Current"
+        "command": "rainlang.compose",
+        "title": "Rainlang Compose"
       }
     ],
     "menus": {
       "editor/context": [
         {
           "when": "resourceLangId == rainlang",
-          "command": "rainlang.compile"
+          "command": "rainlang.compose"
         }
       ]
     },
@@ -93,25 +93,7 @@
     ],
     "configurationDefaults": {
       "[rainlang]": {
-        "editor.semanticHighlighting.enabled": true,
-        "editor.language.colorizedBracketPairs": [
-          [
-            "<",
-            ">"
-          ],
-          [
-            "(",
-            ")"
-          ],
-          [
-            "{",
-            "}"
-          ],
-          [
-            "[",
-            "]"
-          ]
-        ]
+        "editor.semanticHighlighting.enabled": true
       }
     },
     "configuration": {

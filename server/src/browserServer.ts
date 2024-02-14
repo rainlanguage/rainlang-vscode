@@ -2,14 +2,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { 
     Range, 
     hexlify, 
-    arrayify, 
     MetaStore, 
-    keccak256, 
     RainDocument,
     TextDocumentItem, 
     RainLanguageServices,
-    // DeployerQueryResponse,
-    // getDeployedBytecodeMetaHash 
 } from "@rainlanguage/dotrain";
 import {
     TextEdit, 
@@ -70,7 +66,7 @@ connection.onInitialize(async(params: InitializeParams) => {
             },
             hoverProvider: true,
             executeCommandProvider: {
-                commands: ["_compile"]
+                commands: ["_compose"]
             },
             semanticTokensProvider: {
                 legend: {
@@ -102,17 +98,6 @@ connection.onInitialized(() => {
     connection.sendNotification("request-config", workspaceRootUri);
 });
 
-// // update meta store when config has changed and revalidate documents
-// connection.onNotification("update-meta-store", async e => {
-//     try {
-//         for (const d of e[1]) metaStore.update(keccak256(d), d);
-//         for (let i = 0; i < e[2].length; i++) metaStore.update(e[2][i][0], e[2][i][1]);
-//         metaStore.addSubgraphs(e[0]);
-//         // documents.all().forEach(v => validate(v, v.getText(), v.version));
-//     }
-//     catch { /**/ }
-// });
-
 // update meta store when config has changed and revalidate documents
 connection.onNotification("update-meta-store", async e => {
     try {
@@ -141,26 +126,22 @@ connection.onNotification("reval-all", () => {
 
 // executes rain compile command
 connection.onExecuteCommand(async e => {
-    if (e.command === "_compile") {
+    if (e.command === "_compose") {
         const langId = e.arguments![0];
-        const uriOrFile = e.arguments![1];
+        const uri = e.arguments![1];
         const expKeys = JSON.parse(e.arguments![2]);
-        const isUri = e.arguments![3] === "uri";
         if (langId === "rainlang") {
-            let _td;
-            if (isUri) _td = documents.get(uriOrFile)?.getText();
-            else _td = uriOrFile;
+            const _td = documents.get(uri)?.getText();
             if (_td) {
                 try {
-                    return await RainDocument.composeTextAsync(_td, expKeys, metaStore);
-                }
-                catch (err) {
-                    return err;
+                    return [await RainDocument.composeTextAsync(_td, expKeys, metaStore), true];
+                } catch(e) {
+                    return [e, false];
                 }
             }
-            else return null;
+            else return [undefined, false];
         }
-        else return null;
+        else return [undefined, false];
     }
 });
 

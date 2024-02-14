@@ -5,8 +5,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } f
 
 
 let client: LanguageClient;
-const defaultConfigPath1 = "./rainconfig.json";
-const defaultConfigPath2 = "./.rainconfig.json";
+const defaultConfigPath = "./rainconfig.json";
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -27,9 +26,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // directories to check for rain documents, default is "src"
     let watched: vscode.Uri[] = [];
-
-    // // auto compile mappings
-    // const compile = { onSave: [] };
 
     // channel for rainlang compiler
     let compilerChannel: vscode.OutputChannel;
@@ -53,7 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
             { language: "rainlang" },
-            { pattern: "*rainconfig.json", language: "json" }
+            // { pattern: "*rainconfig.json", language: "json" }
         ],
         synchronize: {
             // Notify the server about file changes to ".clientrc files contained in the workspace
@@ -63,42 +59,6 @@ export async function activate(context: vscode.ExtensionContext) {
         },
         // initializationOptions: initConfig
     };
-
-    // get the initial settings and pass them as initialzeOptions to server
-    // const initSettings = vscode.workspace.getConfiguration("rainlang");
-
-    // setting the config file at startup
-    // const configPath = initSettings.config
-    //     ? initSettings.config as string 
-    //     : defaultConfigPath;
-
-    // const configPath = defaultConfigPath;
-
-    // // setup the config file on config change
-    // vscode.workspace.onDidChangeConfiguration(async e => {
-    //     if (e.affectsConfiguration("rainlang.config")) {
-    //         try {
-    //             if (workspaceRootUri) {
-    //                 const newPath = vscode.workspace.getConfiguration("rainlang").config;
-    //                 const newConfigPath = newPath && typeof newPath === "string" 
-    //                     ? newPath 
-    //                     : defaultConfigPath;
-    //                 configUri = vscode.Uri.joinPath(workspaceRootUri, newConfigPath);
-    //                 const content = JSON.parse(
-    //                     (await vscode.workspace.fs.readFile(configUri)).toString()
-    //                 );
-    //                 processConfig(content);
-    //             }
-    //         }
-    //         catch {
-    //             watched = [];
-    //             compile.onSave = [];
-    //             vscode.window.showErrorMessage(
-    //                 "Cannot find or read the config file"
-    //             );
-    //         }
-    //     }
-    // });
 
     // setup the statusbar
     const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -112,7 +72,7 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("rainlang.stop", stop),
         vscode.commands.registerCommand("rainlang.restart", restart),
         // vscode.commands.registerCommand("rainlang.onsave", updateOnSaveCompile),
-        vscode.commands.registerCommand("rainlang.compile", compileCurrentHandler),
+        vscode.commands.registerCommand("rainlang.compose", composeHandler),
         // vscode.commands.registerCommand("rainlang.compile.all", compileAllHandler)
     );
     
@@ -142,75 +102,52 @@ export async function activate(context: vscode.ExtensionContext) {
         statusBar.show();
     }
 
-    // handler for rainlang compiler, send the request to server and logs the result in output channel
-    async function compileCurrentHandler() {
+    // handler for rainlang composer, send the request to server and logs the result in output channel
+    async function composeHandler() {
         if (client && extStatus.active) {
             const expKeys = Array.from((await vscode.window.showInputBox({
                 title: "Expression Names",
                 placeHolder: "binding-1 binding-2 ...",
                 prompt: "specify the expression names in order by a whitespace seperating them"
             })).matchAll(/[^\s]+/g)).map(v => v[0]);
-            const result = await vscode.commands.executeCommand(
-                "_compile",
-                vscode.window.activeTextEditor.document.languageId,
-                vscode.window.activeTextEditor.document.uri.toString(),
-                expKeys,
-                "uri"
-                // {
-                //     start: vscode.window.activeTextEditor.selection.start,
-                //     end: vscode.window.activeTextEditor.selection.end,
-                // }
-            );
             if (!compilerChannel) compilerChannel = vscode.window.createOutputChannel(
                 "Rain Language Compiler",
-                "json"
+                // "code-runner-output"
             );
-            compilerChannel.show(true);
-            if (result) compilerChannel.appendLine(format(
-                JSON.stringify(result, null, 2), 
-                { parser: "json" }
-            ));
-            else compilerChannel.appendLine("undefined");
+            try {
+                const result = await vscode.commands.executeCommand(
+                    "_compose",
+                    vscode.window.activeTextEditor.document.languageId,
+                    vscode.window.activeTextEditor.document.uri.toString(),
+                    expKeys,
+                    // {
+                    //     start: vscode.window.activeTextEditor.selection.start,
+                    //     end: vscode.window.activeTextEditor.selection.end,
+                    // }
+                );
+                compilerChannel.show(true);
+                if (result[1]) {
+                    compilerChannel.appendLine([
+                        new Date(),
+                        result[0],
+                    ].join("\n\n"));
+                } else {
+                    compilerChannel.appendLine([
+                        new Date(),
+                        JSON.stringify(result[0], null, 2),
+                    ].join("\n\n"));
+                }
+            } catch(e) {
+                console.log(e);
+                compilerChannel.show(true);
+                compilerChannel.appendLine([
+                    new Date(),
+                    JSON.stringify(e, null, 2),
+                ].join("\n\n"));
+            }
         }
         else vscode.window.showErrorMessage("rain language server is not running!");
     }
-
-    // // handler for rainlang compiler by sending the request to server for a mapping
-    // async function compileAllHandler() {
-    //     if (client && extStatus.active) {
-    //         const workspaceEdit = new vscode.WorkspaceEdit();
-    //         for (const map of compile.onSave) {
-    //             try {
-    //                 const fileContent = (await vscode.workspace.fs.readFile(map.input)).toString();
-    //                 const result = await vscode.commands.executeCommand(
-    //                     "_compile",
-    //                     "rainlang",
-    //                     fileContent,
-    //                     map.entrypoints,
-    //                     "file"
-    //                 );
-    //                 const contents: Uint8Array = Buffer.from(
-    //                     result 
-    //                         ? format(JSON.stringify(result, null, 2), { parser: "json" })
-    //                         : "\"failed to compile!\""
-    //                 );
-    //                 workspaceEdit.createFile(
-    //                     map.output,
-    //                     { overwrite: true, contents }
-    //                 );
-    //             }
-    //             catch { /**/ }
-    //         }
-    //         vscode.workspace.applyEdit(workspaceEdit);
-    //     }
-    //     else vscode.window.showErrorMessage("rain language server is not running!");
-    // }
-
-    // function updateOnSaveCompile() {
-    //     if (extStatus.onsave) extStatus.onsave = false;
-    //     else extStatus.onsave = true;
-    //     updateStatus();
-    // }
 
     async function restart() {
         if (!extStatus.active) {
@@ -225,7 +162,6 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         else {
             watched = [];
-            // compile.onSave = [];
             configUri = undefined;
             disposables.forEach(v => v?.dispose());
             disposables = [];
@@ -254,31 +190,7 @@ export async function activate(context: vscode.ExtensionContext) {
             }
             catch { 
                 watched = [];
-                // compile.onSave = [];
             }
-            // if (extStatus.onsave) {
-            //     const saveMap = compile.onSave.find(v => v.input.toString() === e.uri.toString());
-            //     if (saveMap) {
-            //         const workspaceEdit = new vscode.WorkspaceEdit();
-            //         const result = await vscode.commands.executeCommand(
-            //             "_compile",
-            //             e.languageId,
-            //             e.uri.toString(),
-            //             saveMap.entrypoints,
-            //             "uri"
-            //         );
-            //         const contents: Uint8Array = Buffer.from(
-            //             result 
-            //                 ? format(JSON.stringify(result, null, 2), { parser: "json" })
-            //                 : "\"failed to compile!\""
-            //         );
-            //         workspaceEdit.createFile(
-            //             saveMap.output,
-            //             { overwrite: true, contents }
-            //         );
-            //         vscode.workspace.applyEdit(workspaceEdit);
-            //     }
-            // }
         }));
 
         disposables.push(vscode.workspace.onDidCreateFiles(async created => {
@@ -297,7 +209,6 @@ export async function activate(context: vscode.ExtensionContext) {
                         }
                         catch {
                             watched = [];
-                            // compile.onSave = [];
                             client.sendNotification("unwatch-all");
                             break;
                         }
@@ -313,7 +224,6 @@ export async function activate(context: vscode.ExtensionContext) {
                     try {
                         if (deleted.files[i].toString() === configUri.toString()) {
                             watched = [];
-                            // compile.onSave = [];
                             configUri = undefined;
                             client.sendNotification("unwatch-all");
                             break;
@@ -342,7 +252,6 @@ export async function activate(context: vscode.ExtensionContext) {
                     }
                     catch { 
                         watched = [];
-                        // compile.onSave = [];
                         client.sendNotification("unwatch-all");
                         break;
                     }
@@ -352,12 +261,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 for (let i = 0; i < renamed.files.length; i++) {
                     try {
                         if (renamed.files[i].oldUri.toString() === configUri.toString()) {
-                            if(renamed.files[i].newUri.toString() ===defaultConfigUri?.toString()){
+                            if(renamed.files[i].newUri.toString() === defaultConfigUri?.toString()){
                                 configUri = defaultConfigUri;
                                 break;
                             }
                             watched = [];
-                            // compile.onSave = [];
                             configUri = undefined;
                             client.sendNotification("unwatch-all");
                             break;
@@ -402,7 +310,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 // wait for server to fully start
                 // await sleep(6000);
                 try {
-                    defaultConfigUri = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath1);
+                    defaultConfigUri = vscode.Uri.joinPath(workspaceRootUri, defaultConfigPath);
                     configUri = defaultConfigUri;
                     const content = JSON.parse(
                         (await vscode.workspace.fs.readFile(configUri)).toString()
@@ -411,7 +319,6 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
                 catch {
                     watched = [];
-                    // compile.onSave = [];
                 }
             }
         }));
@@ -472,49 +379,6 @@ export async function activate(context: vscode.ExtensionContext) {
         const promiseGroup3: any[] = [];
         await client.sendNotification("unwatch-all");
         updateMetaStore(content, workspaceRootUri);
-        // if (
-        //     content?.src?.length > 0 && 
-        //     Array.isArray(content.src) && 
-        //     content.src.every((v: any) => 
-        //         typeof v === "object" &&
-        //         v.input !== undefined &&
-        //         v.output !== undefined &&
-        //         v.entrypoints !== undefined &&
-        //         typeof v.input === "string" &&
-        //         typeof v.output === "string" &&
-        //         v.input.endsWith(".rain") &&
-        //         Array.isArray(v.entrypoints) &&
-        //         v.entrypoints.length > 0 &&
-        //         v.entrypoints.every((e: any) => typeof e === "string")
-        //     )
-        // ) {
-        //     compile.onSave = content.src.map((v: any) => ({
-        //         input: path.isAbsolute(v.input)
-        //             ? vscode.Uri.parse(v.input)
-        //             : vscode.Uri.joinPath(workspaceRootUri, v.input),
-        //         output: path.isAbsolute(v.input)
-        //             ? vscode.Uri.parse(v.output)
-        //             : vscode.Uri.joinPath(
-        //                 workspaceRootUri, 
-        //                 v.output.endsWith(".json") ? v.output : v.output + ".json"
-        //             ),
-        //         entrypoints: v.entrypoints
-        //     }));
-        //     for (const {input} of compile.onSave) {
-        //         promiseGroup1.push(vscode.workspace.fs.stat(input).then(stat => {
-        //             if (stat.type === vscode.FileType.File) {
-        //                 promiseGroup3.push(vscode.workspace.fs.readFile(input).then(
-        //                     v => client.sendNotification(
-        //                         "watch-dotrain", 
-        //                         [input.toString(), v.toString()]
-        //                     ),
-        //                     () => { /**/ }
-        //                 ));
-        //             }
-        //         }));
-        //         newWatched.push(input);
-        //     }
-        // }
 
         // find .rains on startup and send them to server for storing in meta store
         if (
@@ -612,159 +476,5 @@ async function updateMetaStore(content: any, workspaceRootUri: vscode.Uri): Prom
             content.subgraphs.every((v: any) => typeof v === "string")
         ) subgraphs.push(...content.subgraphs);
     }
-    // if (Array.isArray(content?.meta) && content.length > 0) {
-    //     for (let i = 0; i < content.meta.length; i++) {
-    //         const meta = content.meta[i];
-    //         const keys = Object.keys(meta);
-    //         if (
-    //             keys.length >= 1 && 
-    //             (    
-    //                 (
-    //                     keys.includes("binary") &&
-    //                     !keys.includes("hex") &&
-    //                     typeof meta.binary === "string"
-    //                 ) || (
-    //                     keys.includes("hex") &&
-    //                     !keys.includes("binary") &&
-    //                     typeof meta.hex === "string"
-    //                 )
-    //             )
-    //         ) {
-    //             if (keys.includes("binary")) {
-    //                 const uri = path.isAbsolute(meta.binary)
-    //                     ? vscode.Uri.parse(meta.binary)
-    //                     : vscode.Uri.joinPath(workspaceRootUri, meta.binary);
-    //                 try {
-    //                     metas.push(hexlify(await vscode.workspace.fs.readFile(uri)));
-    //                 }
-    //                 catch { /**/ }
-    //             }
-    //             if (keys.includes("hex")) {
-    //                 const uri = path.isAbsolute(meta.hex)
-    //                     ? vscode.Uri.parse(meta.hex)
-    //                     : vscode.Uri.joinPath(workspaceRootUri, meta.hex);
-    //                 try {
-    //                     metas.push((await vscode.workspace.fs.readFile(uri)).toString());
-    //                 }
-    //                 catch { /**/ }
-    //             }
-    //         }
-    //     }
-    // }
-    // if (typeof content.deployers === "object" && content.deployers !== null) {
-    //     const items = Object.entries(content.deployers);
-    //     for (let i = 0; i < items.length; i ++) {
-    //         const [hash, details] = items[i];
-    //         if (
-    //             /^0x[a-fA-F0-9]+$/.test(hash) &&
-    //             typeof details === "object" &&
-    //             details !== null &&
-    //             Object.keys(details).length >= 5 &&
-    //             "expressionDeployer" in details &&
-    //             typeof details.expressionDeployer === "string" &&
-    //             "parser" in details &&
-    //             typeof details.parser === "string" &&
-    //             "store" in details &&
-    //             typeof details.store === "string" &&
-    //             "interpreter" in details &&
-    //             typeof details.interpreter === "string" &&
-    //             "constructionMeta" in details &&
-    //             typeof details.constructionMeta === "object" &&
-    //             details.constructionMeta !== null &&
-    //             (
-    //                 (
-    //                     "binary" in details.constructionMeta && 
-    //                     !("hex" in details.constructionMeta) && 
-    //                     typeof details.constructionMeta.binary === "string"
-    //                 ) || (
-    //                     "hex" in details.constructionMeta && 
-    //                     !("binary" in details.constructionMeta) && 
-    //                     typeof details.constructionMeta.hex === "string"
-    //                 )
-    //             )
-    //         ) {
-    //             try {
-    //                 const parserPath = path.isAbsolute(details.parser)
-    //                     ? vscode.Uri.parse(details.parser)
-    //                     : vscode.Uri.joinPath(workspaceRootUri, details.parser);
-    //                 const parserArtifact = JSON.parse(
-    //                     (await vscode.workspace.fs.readFile(parserPath)).toString()
-    //                 );
-    //                 const parser = typeof parserArtifact.deployedBytecode.object === "string" && parserArtifact.deployedBytecode.object
-    //                     ? parserArtifact.deployedBytecode.object
-    //                     : undefined;
-
-    //                 const storePath = path.isAbsolute(details.store)
-    //                     ? vscode.Uri.parse(details.store)
-    //                     : vscode.Uri.joinPath(workspaceRootUri, details.store);
-    //                 const storeArtifact = JSON.parse(
-    //                     (await vscode.workspace.fs.readFile(storePath)).toString()
-    //                 );
-    //                 const store = typeof storeArtifact.deployedBytecode.object === "string" && storeArtifact.deployedBytecode.object
-    //                     ? storeArtifact.deployedBytecode.object
-    //                     : undefined;
-
-    //                 const interpreterPath = path.isAbsolute(details.interpreter)
-    //                     ? vscode.Uri.parse(details.interpreter)
-    //                     : vscode.Uri.joinPath(workspaceRootUri, details.interpreter);
-    //                 const interpreterArtifact = JSON.parse(
-    //                     (await vscode.workspace.fs.readFile(interpreterPath)).toString()
-    //                 );
-    //                 const interpreter = typeof interpreterArtifact.deployedBytecode.object === "string" && interpreterArtifact.deployedBytecode.object
-    //                     ? interpreterArtifact.deployedBytecode.object
-    //                     : undefined;
-
-    //                 const deployerPath = path.isAbsolute(details.expressionDeployer)
-    //                     ? vscode.Uri.parse(details.expressionDeployer)
-    //                     : vscode.Uri.joinPath(workspaceRootUri, details.expressionDeployer);
-    //                 const deployerArtifact = JSON.parse(
-    //                     (await vscode.workspace.fs.readFile(deployerPath)).toString()
-    //                 );
-    //                 const deployerDeployedBytecode = typeof deployerArtifact.deployedBytecode.object === "string" && deployerArtifact.deployedBytecode.object
-    //                     ? deployerArtifact.deployedBytecode.object
-    //                     : undefined;
-    //                 const deployerBytecode = typeof deployerArtifact.bytecode.object === "string" && deployerArtifact.bytecode.object
-    //                     ? deployerArtifact.bytecode.object
-    //                     : undefined;
-
-    //                 if (!parser || !store || !interpreter || !deployerBytecode || !deployerDeployedBytecode) throw "";
-
-    //                 let metaBytes = null;
-    //                 if ("hex" in details.constructionMeta && typeof details.constructionMeta.hex === "string") {
-    //                     const uri =  path.isAbsolute(details.constructionMeta.hex)
-    //                         ? vscode.Uri.parse(details.constructionMeta.hex)
-    //                         : vscode.Uri.joinPath(
-    //                             workspaceRootUri, 
-    //                             details.constructionMeta.hex
-    //                         );
-    //                     metaBytes = (await vscode.workspace.fs.readFile(uri)).toString();
-    //                 }
-    //                 if ("binary" in details.constructionMeta && typeof details.constructionMeta.binary === "string") {
-    //                     const uri = path.isAbsolute(details.constructionMeta.binary)
-    //                         ? vscode.Uri.parse(details.constructionMeta.binary)
-    //                         : vscode.Uri.joinPath(
-    //                             workspaceRootUri, 
-    //                             details.constructionMeta.binary
-    //                         );
-    //                     metaBytes = hexlify(await vscode.workspace.fs.readFile(uri));
-    //                 }
-
-    //                 if (!metaBytes) throw "";
-
-    //                 deployers.push([
-    //                     hash,
-    //                     metaBytes,
-    //                     deployerBytecode,
-    //                     deployerDeployedBytecode,
-    //                     parser, 
-    //                     store,
-    //                     interpreter
-    //                 ]);
-    //             }
-    //             catch { /**/ }
-    //         }
-    //     }
-    // }
-
     client.sendNotification("update-meta-store", [subgraphs]);
 }
