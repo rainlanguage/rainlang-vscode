@@ -3,11 +3,7 @@ on: [push]
 
 jobs:
   rainix:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-      fail-fast: false
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env:
       DEPLOYMENT_KEY: ${{ github.ref == 'refs/heads/main' && secrets.PRIVATE_KEY || secrets.PRIVATE_KEY_DEV }}
     steps:
@@ -17,19 +13,19 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@v2
 
       - name: Install NodeJS v21
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 21
           cache: 'npm'
 
-      - name: Install
-        run:  nix run .#build
+      - name: Install Deps
+        run:  nix run .#install
 
       - name: Build Prod
-        run:  nix develop -c npm run build-prod
+        run:  npm run build-prod
 
       - name: Build Dev
-        run:  nix develop -c npm run build
+        run:  npm run build
 
       - name: Lint
         run:  npm run lint

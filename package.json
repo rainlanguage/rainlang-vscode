@@ -2,8 +2,8 @@
   "name": "rainlang-vscode",
   "displayName": "Rain Language",
   "publisher": "rainprotocol",
-  "description": "Rain Protocol language (rainlang) implementation for vscode",
-  "author": "Rain Protocol",
+  "description": "Rain Language (rainlang) implementation for vscode",
+  "author": "Rain Language",
   "license": "CAL-1.0",
   "version": "2.0.4",
   "private": true,
@@ -28,7 +28,7 @@
     "Formatters"
   ],
   "keywords": [
-    "rainprotocol",
+    "rainlanguage",
     "rain",
     "blockchain",
     "ethereum",

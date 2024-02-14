@@ -11,8 +11,8 @@
       pkgs = rainix.pkgs.${system};
     in rec {
       packages = {
-        build = rainix.mkTask.${system} {
-          name = "build";
+        install = rainix.mkTask.${system} {
+          name = "install";
           body = ''
             set -euxo pipefail
             npm install
@@ -21,17 +21,6 @@
             pkgs.wasm-bindgen-cli
             rainix.rust-toolchain.${system}
             rainix.rust-build-inputs.${system}
-            rainix.node-build-inputs.${system}
-          ];
-        };
-
-        test = rainix.mkTask.${system} {
-          name = "test";
-          body = ''
-            set -euxo pipefail
-            npm test
-          '';
-          additionalBuildInputs = [
             rainix.node-build-inputs.${system}
           ];
         };

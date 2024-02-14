@@ -21,11 +21,7 @@ It also includes an End-to-End test.
  
 Rain Language server works for rain files with `.rain` extentions (utf8 encoded), example:
 ```rainlang
-@ dispair   0x78fd1edb0bdb928db6015990fecafbb964b44692e2d435693062dd4efc6254dd
-@ contmeta  0x56ffc3fc82109c33f1e1544157a70144fc15e7c6e9ae9c65a636fd165b1bc51c 
-  'calling-context new-name /* renaming "calling-context" to "new-name" */
-  base ! /* eliding an item from the items in the import */
-
+---
 /* import a .rain meta to root */
 @ 0xc509e3a2bd58cb0062fb80c6d9f2e40cb815694f5733c3041c2c620a46f6ad94
   elided 12 /* rebind the elided binding in the import */
@@ -41,13 +37,16 @@ Rain Language server works for rain files with `.rain` extentions (utf8 encoded)
 #main
   _: twelve,
   _: .my-address,
-  _: int-add(.dispair.int-max(twelve .value infinity) .const .contmeta.new-name<1>());
+  _: int-add(int-max(twelve .value) .const);
 ```
 
 as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
 ```typescript
 // rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
-const myExp = rainlang`_: add(1 2)`
+const myExp = rainlang`
+---
+_: add(1 2)
+`
 ```
 <br>
 
@@ -71,8 +70,7 @@ example:
 <br>
 
 ## Extension Commands
-- `Rainlang Compile` compiles the specified `src` files in the rainconfig to their specified output paths, accessible from Command Palette or from editor's context menu (right-click).
-- `Rainlang Compile Current` accessible from Command Palette or from editor's context menu (right-click) to compile the selected rainlang document and get the ExpressionConfig.
+- `Rainlang Compose` accessible from Command Palette or from editor's context menu (right-click) to compose the selected .rain and get the rainlang text.
 - `Start Rain Language Server` starts the Rain Language Server if it is not running. accessible from Command Palette or statusbar.
 - `Stop Rain Language Server` stops the Rain Language Server if it is running. accessible from Command Palette or statusbar.
 - `Restart Rain Language Server` restarts the Rain Language Server if it is running. accessible from Command Palette or statusbar.

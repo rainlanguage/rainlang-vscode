@@ -14,24 +14,30 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v4
       - uses: DeterminateSystems/magic-nix-cache-action@v2
 
-      - name: Install
-        run:  nix run .#build
+      - name: Install NodeJS v21
+        uses: actions/setup-node@v4
+        with:
+          node-version: 21
+          cache: 'npm'
+
+      - name: Install Deps
+        run:  nix run .#install
 
       - name: Build Prod
-        run:  nix develop -c npm run build-prod
+        run:  npm run build-prod
 
       - name: Lint
-        run:  nix develop -c npm run lint
+        run:  npm run lint
 
       # install playwright
       - name: Install Playwright
-        run: nix develop -c npx playwright install
+        run: npx playwright install
 
       # Run the desktop tests using headless setup
       - name: Desktop Extension Test
         uses: coactions/setup-xvfb@v1
         with:
-          run: nix develop -c npm test
+          run: npm test
 
       - run: |
           git config --global user.email "${{ secrets.CI_GIT_EMAIL }}"
@@ -39,7 +45,7 @@ jobs:
 
       # bump version
       - name: Bump Patch Version
-        run: echo "NEW_VERSION=$(nix develop -c npm version patch --no-git-tag-version)" >> $GITHUB_ENV
+        run: echo "NEW_VERSION=$(npm version patch --no-git-tag-version)" >> $GITHUB_ENV
 
       # Commit changes and tag
       - name: Commit And Tag
@@ -68,6 +74,6 @@ jobs:
 
       # Publish a pre-release version to vscode marketplace
       - name: Pre-release Publish To vscode Marketplace
-        run: nixdevelop -c y | npx vsce publish --pre-release
+        run: y | npx vsce publish --pre-release
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
