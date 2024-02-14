@@ -20,7 +20,7 @@ import { runTests } from "@vscode/test-electron";
             extensionDevelopmentPath, 
             extensionTestsPath, 
             launchArgs: [ workspacePath ],
-            version: "1.84.2"
+            version: "stable"
         });
     } 
     catch (err) {
