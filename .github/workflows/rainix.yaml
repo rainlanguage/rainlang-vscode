@@ -1,0 +1,43 @@
+name: Rainix CI
+on: [push]
+
+jobs:
+  rainix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    env:
+      DEPLOYMENT_KEY: ${{ github.ref == 'refs/heads/main' && secrets.PRIVATE_KEY || secrets.PRIVATE_KEY_DEV }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@v4
+      - uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Install
+        run:  nix run .#build
+
+      - name: Build Prod
+        run:  nix develop -c npm run build-prod
+
+      - name: Build Dev
+        run:  nix develop -c npm run build
+
+      - name: Lint
+        run:  nix develop -c npm run lint
+
+      # install playwright
+      - name: Install Playwright
+        run: nix develop -c npx playwright install
+
+      # Run the desktop tests using headless setup
+      - name: Desktop Extension Test
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: nix develop -c npm run test-desktop
+
+      # Run the web extention tests
+      - name: Web Extension Test
+        run: nix develop -c npm run test-web

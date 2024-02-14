@@ -191,5 +191,8 @@
     "webpack": "^5.77.0",
     "webpack-cli": "^5.0.1",
     "webpack-node-externals": "^3.0.0"
+  },
+  "dependencies": {
+    "@rainlanguage/dotrain": "github:rainlanguage/dotrain#6556a92cffea0a0d8b57ec1950272d198c439322"
   }
 }
