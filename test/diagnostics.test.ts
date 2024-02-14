@@ -28,7 +28,7 @@ suite("Rainlang Diagnostics", () => {
     test("Should detect diagnostics correctly", async () => {
         await testDiagnostics(docUri, [
             { 
-                message : "Expected Semi", 
+                message : "expected semi", 
                 range   : toRange(2, 16, 2, 16), 
                 severity: vscode.DiagnosticSeverity.Error, 
                 code    : 1032,

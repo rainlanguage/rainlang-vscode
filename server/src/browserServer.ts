@@ -19,7 +19,6 @@ import {
     DidChangeConfigurationNotification 
 } from "vscode-languageserver/browser";
 
-let startupReady = false;
 
 /* browser specific setup code */
 const messageReader = new BrowserMessageReader(self);
@@ -105,7 +104,6 @@ connection.onNotification("update-meta-store", async e => {
         // documents.all().forEach(v => validate(v, v.getText(), v.version));
     }
     catch { /**/ }
-    startupReady = true;
 });
 
 connection.onNotification("watch-dotrain", async e => {
@@ -261,7 +259,7 @@ async function getSetting() {
 
 // validate a document
 async function validate(uri: string, text: string, version: number, languageId: string) {
-    if (startupReady && languageId === "rainlang") {
+    if (languageId === "rainlang") {
         langServices.doValidateAsync({ uri, text, version, languageId }, true).then(
             diagnostics => {
                 if (version === documents.get(uri)?.version) {
