@@ -52,45 +52,15 @@ const myExp = rainlang`_: add(1 2)`
 <br>
 
 ## rainconfig
-rainconfig specifies the configuration details for compiler and language server and should be placed in the root directory of working workspace named `rainconfig.json` or `.rainconfig.json`, an schema is applied to the rainconfig if this extension is active. 
+rainconfig specifies the configuration details for compiler and language server and should be placed in the root directory of working workspace named `rainconfig.json`, an schema is applied to the rainconfig if this extension is active. 
 bellow is the list of rainconfig fields (all fields are optional):
-- `src`: Specifies list of .rain source files mappings for compilation, where specified .rain input files will get compiled and results written into output json file.
 - `include`: Specifies a list of directories (files/folders) to be included in watch. 'src' files are included by default and folders will be watched recursively for .rain files.
 - `subgraphs`: Specifies additional subgraph endpoints to search for a meta for a given hash, [default rain subgraphs](https://github.com/rainprotocol/meta/blob/master/src/rainSubgraphs.ts) are always included.
-- `meta`: Specifies local meta files paths or an object with path and hash (this will result in hash explicit validation) as binary or utf8 encoded hex strings starting with 0x.
 
 example:
 ```json
 {
   "include": ["./path/to/folder", "./path/to/another-folder"],
-  "src": [
-    {
-      "input": "./path/to/file1.rain",
-      "output": "./path/to/compiled-file1.json",
-      "entrypoints": ["entrypoint1", "entrypoint2"]
-    },
-    {
-      "input": "./path/to/file2.rain",
-      "output": "./path/to/compiled-file2.json",
-      "entrypoints": ["entrypoint1", "entrypoint2"]
-    }
-  ],
-  "meta": {
-    "binary": [
-      "./path/to/binary-meta", 
-      {
-        "path": "./path/to/another-binary-meta",
-        "hash": "0x123456789abcdef..."
-      }
-    ],
-    "hex": [
-      "./path/to/hex-meta", 
-      {
-        "path": "./path/to/another-hex-meta",
-        "hash": "0x123456789abcdef..."
-      }
-    ]
-  },
   "subgraphs": [
     "https://subgraph1-uril",
     "https://subgraph2-uril",
