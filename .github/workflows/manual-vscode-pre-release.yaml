@@ -1,4 +1,4 @@
-name: Manual NPM Release
+name: Manual VSCODE Pre Release
     
 on: [workflow_dispatch]
 
@@ -28,7 +28,7 @@ jobs:
         run: nix develop -c npx playwright install
 
       # Run the desktop tests using headless setup
-      - name: Extension Test
+      - name: Desktop Extension Test
         uses: coactions/setup-xvfb@v1
         with:
           run: nix develop -c npm test
@@ -66,8 +66,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Publish an official version to vscode marketplace
-      - name: Official Publish To vscode Marketplace
-        run: nix develop -c y | npx vsce publish
+      # Publish a pre-release version to vscode marketplace
+      - name: Pre-release Publish To vscode Marketplace
+        run: nixdevelop -c y | npx vsce publish --pre-release
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
