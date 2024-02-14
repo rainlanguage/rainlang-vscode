@@ -9,13 +9,13 @@
   "private": true,
   "main": "./dist/node/client",
   "browser": "./dist/browser/client",
-  "homepage": "http://rainprotocol.xyz/",
+  "homepage": "https://rainlang.xyz",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rainprotocol/rainlang-vscode"
+    "url": "https://github.com/rainlanguage/rainlang-vscode"
   },
   "bugs": {
-    "url": "https://github.com/rainprotocol/rainlang-vscode/issues"
+    "url": "https://github.com/rainlanguage/rainlang-vscode/issues"
   },
   "icon": "./docs/images/rain-logo-800px.png",
   "galleryBanner": {
