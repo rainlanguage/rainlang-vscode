@@ -115,5 +115,5 @@ example:
 ├──── package.json                              // The extension manifest
 ├──── rain-language-configuration.json          // Rain language configurations
 ├──── rainconfig.schema.json                    // rainconfig schema
-└──── shell.nix                                 // Nix shell configuration
+└──── flake.nix                                 // Nix flake configuration
 ```
