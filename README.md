@@ -53,7 +53,7 @@ _: add(1 2)
 rainconfig specifies the configuration details for .rain composer and language server and should be placed in the root directory of working workspace named `rainconfig.json`, an schema is applied to the rainconfig if this extension is active. 
 bellow is the list of rainconfig fields (all fields are optional):
 - `include`: Specifies a list of directories (files/folders) to be included in watch. 'src' files are included by default and folders will be watched recursively for .rain files.
-- `subgraphs`: Specifies additional subgraph endpoints to search for a meta for a given hash, [default rain subgraphs](https://github.com/rainprotocol/meta/blob/master/src/rainSubgraphs.ts) are always included.
+- `subgraphs`: Specifies additional subgraph endpoints to search for a meta for a given hash, [default rain subgraphs](https://github.com/rainlanguage/rain.metadata/blob/15cee2bcbdd178a0fb8c4bbdf210edd717a6ac98/crates/cli/src/subgraph/mod.rs#L30) are always included.
 
 example:
 ```json
