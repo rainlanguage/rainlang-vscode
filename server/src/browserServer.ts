@@ -128,12 +128,12 @@ connection.onExecuteCommand(async e => {
     if (e.command === "_compose") {
         const langId = e.arguments![0];
         const uri = e.arguments![1];
-        const expKeys = JSON.parse(e.arguments![2]);
+        const entrypoints = JSON.parse(e.arguments![2]);
         if (langId === "rainlang") {
             const _td = documents.get(uri)?.getText();
             if (_td) {
                 try {
-                    return [await RainDocument.composeTextAsync(_td, expKeys, metaStore), true];
+                    return [await RainDocument.composeTextAsync(_td, entrypoints, metaStore), true];
                 } catch(e) {
                     return [e, false];
                 }
