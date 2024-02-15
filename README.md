@@ -1,6 +1,6 @@
 # Rain Language Implementation for Visual Studio Code
 
-Rain language implementation for vscode. Uses Rain Language Services from [rainlang](https://github.com/rainprotocol/rainlang) repo under the hood.
+Rain language implementation for vscode. Uses Rain Language Services from [dorain](https://github.com/rainlanguage/dotrain) repo under the hood.
 This extension provides the following language features:
 - Completions
 - Diagnostics
@@ -41,7 +41,7 @@ Rain Language server works for rain files with `.rain` extentions (utf8 encoded)
 
 as well as syntax highlighting for javascript/typescript [Tagged Template Literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) with using `rainlang()` as a tagged template literal function, example:
 ```typescript
-// rainlang function is part of rainlang API, see: https://github.com/rainprotocol/rainlang
+// rainlang function is part of dotrain library API, see: https://github.com/rainlanguage/dotrain
 const myExp = rainlang`
 ---
 _: add(1 2)
