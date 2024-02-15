@@ -2,25 +2,21 @@
 	"name": "rainlang-vscode-server",
 	"description": "Rain language server implementation for vscode.",
 	"version": "0.0.1",
-	"author": "Rain Protocol",
+	"author": "Rain Language",
 	"license": "CAL-1.0",
 	"engines": {
 		"node": "*"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/rainprotocol/rainlang-vscode"
+		"url": "https://github.com/rainlanguage/rainlang-vscode"
 	},
 	"bugs": {
-		"url": "https://github.com/rainprotocol/rainlang-vscode/issues"
+		"url": "https://github.com/rainlanguage/rainlang-vscode/issues"
 	},
 	"dependencies": {
 		"@rainlanguage/dotrain": "github:rainlanguage/dotrain#9b5e1f38e556f2e3b5f865b5efbf780692b672a9",
 		"vscode-languageserver": "^8.1.0",
 		"vscode-languageserver-textdocument": "^1.0.11"
-	},
-	"devDependencies": {
-		"bufferutil": "^4.0.7",
-		"utf-8-validate": "^5.0.10"
 	}
 }

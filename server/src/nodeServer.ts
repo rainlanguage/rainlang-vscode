@@ -140,17 +140,17 @@ connection.onExecuteCommand(async e => {
     }
 });
 
-connection.onDidOpenTextDocument(async v => {
+documents.onDidOpen(async v => {
     validate(
-        v.textDocument.uri,
-        v.textDocument.text, 
-        v.textDocument.version, 
-        v.textDocument.languageId
+        v.document.uri,
+        v.document.getText(),
+        v.document.version, 
+        v.document.languageId
     );
 });
 
-connection.onDidCloseTextDocument(v => {
-    connection.sendDiagnostics({ uri: v.textDocument.uri, diagnostics: []});
+documents.onDidClose(v => {
+    connection.sendDiagnostics({ uri: v.document.uri, diagnostics: []});
 });
 
 documents.onDidChangeContent(change => {

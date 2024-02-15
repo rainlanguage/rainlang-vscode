@@ -20,4 +20,4 @@ some-other-key:
  
 #main 
   using-words-from 0x123
-  _: int-add<'kj value kjh.my-address>(1 int-max(.value))
+  _: int-add<'kj value kjh.my-address>(1 int-max(.value));

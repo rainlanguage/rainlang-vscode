@@ -1,6 +1,4 @@
 import * as vscode from "vscode";
-import { format } from "prettier/standalone";
-import babelParser from "prettier/parser-babel";
 import { LanguageClient, LanguageClientOptions } from "vscode-languageclient/browser";
 
 
@@ -11,7 +9,7 @@ const defaultConfigPath = "./rainconfig.json";
 export async function activate(context: vscode.ExtensionContext) {
     
     // status of the client/server
-    const extStatus = { onsave: true, active: true };
+    const extStatus = { active: true };
 
     // disposables to free at server stop
     let disposables: vscode.Disposable[] = [];
@@ -55,9 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("rainlang.start", start),
         vscode.commands.registerCommand("rainlang.stop", stop),
         vscode.commands.registerCommand("rainlang.restart", restart),
-        // vscode.commands.registerCommand("rainlang.onsave", updateOnSaveCompile),
         vscode.commands.registerCommand("rainlang.compose", composeHandler),
-        // vscode.commands.registerCommand("rainlang.compile.all", compileAllHandler)
     );
 
     function updateStatus() {
@@ -68,15 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
             statusBar.tooltip.appendMarkdown([
                 "\n\n[Stop Server](command:rainlang.stop)",
                 "\n\n[Restart Server](command:rainlang.restart)",
-                // "\n\n---\n\n",
-                // "\n\n[Compile](command:rainlang.compile.all)",
             ].join(""));
-            // if (extStatus.onsave) statusBar.tooltip.appendMarkdown(
-            //     "\n\n[Turn Off Compile-On-Save](command:rainlang.onsave)",
-            // );
-            // else statusBar.tooltip.appendMarkdown(
-            //     "\n\n[Turn On Compile-On-Save](command:rainlang.onsave)",
-            // );
         }
         else {
             statusBar.tooltip = new vscode.MarkdownString("Rainlang Extension (stopped)", true);
@@ -104,10 +92,6 @@ export async function activate(context: vscode.ExtensionContext) {
                     vscode.window.activeTextEditor.document.languageId,
                     vscode.window.activeTextEditor.document.uri.toString(),
                     JSON.stringify(expKeys),
-                    // {
-                    //     start: vscode.window.activeTextEditor.selection.start,
-                    //     end: vscode.window.activeTextEditor.selection.end,
-                    // }
                 );
                 compilerChannel.show(true);
                 if (result[1]) {
@@ -364,6 +348,7 @@ export async function activate(context: vscode.ExtensionContext) {
         watched = newWatched;
         await Promise.allSettled(promiseGroup1);
         await Promise.allSettled(promiseGroup2);
+        await sleep(1000);
         client.sendNotification("reval-all");
     }
 }

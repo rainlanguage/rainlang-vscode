@@ -8,7 +8,7 @@
 const path = require("path");
 const webpack = require("webpack");
 const TerserPlugin = require("terser-webpack-plugin");
-const nodeExternals = require("webpack-node-externals");
+// const nodeExternals = require("webpack-node-externals");
 
 /** desktop extension config */
 const node = (prod) => {
@@ -47,7 +47,7 @@ const node = (prod) => {
         },
         externals: [
             { vscode: "commonjs vscode" }, // ignored because it doesn't exist
-            nodeExternals()
+            // nodeExternals()
         ],
         performance: {
             hints: false,
@@ -69,7 +69,7 @@ const node = (prod) => {
             libraryTarget: "commonjs"
         },
         resolve: {
-            mainFields: ["module", "main"],
+            mainFields: ["main"],
             extensions: [".ts", ".js"],
             // alias: {
             //     "@rainlanguage/dotrain": "@rainlanguage/dotrain/cjs"
@@ -99,7 +99,7 @@ const node = (prod) => {
         },
         externals: [
             { vscode: "commonjs vscode" }, // ignored because it doesn't exist
-            nodeExternals()
+            // nodeExternals()
         ],
         performance: {
             hints: false,
