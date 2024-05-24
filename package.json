@@ -17,7 +17,7 @@
   "bugs": {
     "url": "https://github.com/rainlanguage/rainlang-vscode/issues"
   },
-  "icon": "./docs/images/rain-logo-800px.png",
+  "icon": "./docs/images/rainlang-logo.png",
   "galleryBanner": {
     "color": "#f1efea",
     "theme": "light"
@@ -80,8 +80,8 @@
         ],
         "configuration": "./rain-language-configuration.json",
         "icon": {
-          "light": "./docs/images/rain-logo-icon.svg",
-          "dark": "./docs/images/rain-logo-icon.svg"
+          "light": "./docs/images/rainlang-logo.svg",
+          "dark": "./docs/images/rainlang-logo.svg"
         }
       }
     ],
