@@ -5,7 +5,7 @@ jobs:
   rainix:
     runs-on: ubuntu-latest
     env:
-      DEPLOYMENT_KEY: ${{ github.ref == 'refs/heads/main' && secrets.PRIVATE_KEY || secrets.PRIVATE_KEY_DEV }}
+      DEPLOYMENT_KEY: ${{ secrets.PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
